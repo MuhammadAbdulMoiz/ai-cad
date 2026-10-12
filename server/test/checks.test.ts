@@ -47,6 +47,23 @@ describe('evaluateFeature', () => {
   it('feature_exists unsupported -> cannot pass', () => {
     expect(evaluateFeature(ctx({ ev: ev({ feature_exists: false }) })).passed).toBe(false);
   });
+  it('evaluates every dimension check, not just the first per kind', () => {
+    const f = { ...feature, checks: [{ kind: 'dimension' as const, expect: { name: 'depth', value: 8 } },
+      { kind: 'dimension' as const, expect: { name: 'width', value: 100 } }] };
+    const wrong = { ...extrude, dims: { depth: 8, width: 90 } };
+    const r = evaluateFeature(ctx({ feature: f, diff: { added: [wrong], removed: [], modified: [] }, cur: snap(wrong) }));
+    const dims = r.results.filter((x) => x.kind === 'dimension');
+    expect(dims.map((x) => x.status)).toEqual(['pass', 'fail']);
+    expect(r.passed).toBe(false);
+  });
+  it('malformed dimension expectation -> fail, not unsupported', () => {
+    const f = { ...feature, checks: [{ kind: 'dimension' as const, expect: { name: 'depth', value: 'eight' } }] };
+    const r = evaluateFeature(ctx({ feature: f }));
+    const d = r.results.find((x) => x.kind === 'dimension')!;
+    expect(d.status).toBe('fail');
+    expect(d.detail).toBe('malformed dimension expectation');
+    expect(r.passed).toBe(false);
+  });
   it('wrong dimension -> fail', () => {
     const bad = { ...extrude, dims: { depth: 5 } };
     expect(evaluateFeature(ctx({ diff: { added: [bad], removed: [], modified: [] }, cur: snap(bad) })).passed).toBe(false);

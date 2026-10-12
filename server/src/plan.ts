@@ -30,9 +30,22 @@ const ParamsZ: Record<FeatureType, z.ZodTypeAny> = {
   extrude: z.object({ depth: pos }),
 };
 
+const unsupportedOp = (type: string) =>
+  `operation "${type}" not supported in this version (supported: ${FEATURE_TYPES.join(', ')})`;
+
 export function validatePlan(raw: unknown): PlanResult {
   const parsed = PlanZ.safeParse(raw);
-  if (!parsed.success) return { ok: false, unsupported: false, errors: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`) };
+  if (!parsed.success) {
+    const errors = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`);
+    // Still surface unknown operations so a bad id or param does not hide them.
+    const feats = raw && typeof raw === 'object' ? (raw as { features?: unknown }).features : undefined;
+    let unsupported = false;
+    if (Array.isArray(feats)) for (const f of feats) {
+      const t = (f as { type?: unknown } | null)?.type;
+      if (typeof t === 'string' && !(FEATURE_TYPES as readonly string[]).includes(t)) { unsupported = true; errors.push(unsupportedOp(t)); }
+    }
+    return { ok: false, unsupported, errors };
+  }
   const p = parsed.data;
   const errors: string[] = [];
   let unsupported = false;
@@ -41,7 +54,7 @@ export function validatePlan(raw: unknown): PlanResult {
     if (seen.has(f.id)) errors.push(`duplicate feature id ${f.id}`);
     if (!(FEATURE_TYPES as readonly string[]).includes(f.type)) {
       unsupported = true;
-      errors.push(`operation "${f.type}" not supported in this version (supported: ${FEATURE_TYPES.join(', ')})`);
+      errors.push(unsupportedOp(f.type));
     } else {
       const pr = ParamsZ[f.type as FeatureType].safeParse(f.params);
       if (!pr.success) errors.push(`${f.id} params: ${pr.error.issues.map((i) => `${i.path.join('.')} ${i.message}`).join('; ')}`);

@@ -17,6 +17,8 @@ const r = (kind: CheckKind, status: CheckStatus, detail: string): CheckResult =>
 
 function dimension(c: Check, obj: SnapObject | undefined): CheckResult {
   const { name, value, tol = 0.01 } = c.expect ?? {};
+  if (typeof name !== 'string' || typeof value !== 'number' || !Number.isFinite(value))
+    return r('dimension', 'fail', 'malformed dimension expectation');
   const v = obj?.dims?.[name];
   if (v === undefined) return r('dimension', 'unsupported', `dimension "${name}" not exposed`);
   return Math.abs(v - value) <= tol ? r('dimension', 'pass', `${name}=${v}`) : r('dimension', 'fail', `${name}=${v}, expected ${value}`);
@@ -26,7 +28,11 @@ export function evaluateFeature(ctx: FeatureCtx): { results: CheckResult[]; pass
   const { feature, diff, ev } = ctx;
   const cls = ev.featureClass[feature.type];
   const created = diff.added.find((o) => o.cls === cls);
-  const kinds = [...new Map([...MANDATORY.map((k) => [k, { kind: k }] as const), ...feature.checks.map((c) => [c.kind, c] as const)]).values()];
+  // Every check in feature.checks is evaluated in order; a MANDATORY kind is added only when the feature does not declare it.
+  const kinds: Check[] = [
+    ...MANDATORY.filter((k) => !feature.checks.some((c) => c.kind === k)).map((k) => ({ kind: k })),
+    ...feature.checks,
+  ];
 
   const results = kinds.map((c): CheckResult => {
     if (!ev.supported[c.kind]) return r(c.kind, 'unsupported', 'not exposed by inspector (Task 0 evidence)');

@@ -19,6 +19,16 @@ describe('validatePlan', () => {
     expect(r.ok).toBe(false);
     if (!r.ok) { expect(r.unsupported).toBe(true); expect(r.errors.join()).toContain('operation "hole" not supported'); }
   });
+  it('reports unsupported op even when the schema also fails', () => {
+    const p = clone(); p.features[0].id = 'x1'; p.features.push({ id: 'f3', type: 'hole', dependsOn: ['f2'], params: {}, checks: [] });
+    const r = validatePlan(p);
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.unsupported).toBe(true);
+      expect(r.errors.join()).toContain('operation "hole" not supported');
+      expect(r.errors.length).toBeGreaterThan(1);
+    }
+  });
   it('rejects forward dependency', () => {
     const p = clone(); p.features[0].dependsOn = ['f2'];
     expect(validatePlan(p).ok).toBe(false);
