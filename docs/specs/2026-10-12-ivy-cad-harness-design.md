@@ -131,9 +131,17 @@ any state --cancel--> cancelling → reporting → cancelled
 ```
 
 - **Single slot**: `POST /runs` while a run is active → `409 {error:'busy', runId}`.
-- **baseline**: before each feature, snapshot the inspector object set (IDs and undo-history head).
-  Feature checks only match objects **not in the baseline**, so a pre-existing feature can never
-  satisfy a new check.
+- **baseline**: before each feature, snapshot every inspector object as `{id, class, hash}` (hash of
+  its normalized `zcad_get_object_json`), plus a console-log mark. Feature checks only match
+  objects **not in the baseline**, so a pre-existing feature can never satisfy a new check.
+  After the feature, any baseline object that was removed or whose hash changed is an
+  **unexpected modification**, unless its class is in the evidence-derived `volatileClasses`
+  list (objects Task 0 shows legitimately change on a normal operation, e.g. document root).
+  An unexpected modification fails the feature.
+- **console baseline**: console errors are keyed by a normalized signature (message without
+  numbers, hex ids or URLs' query strings). Errors during a feature whose signature was never seen
+  before that feature started are `new` and fail the feature (`no_new_console_errors`). Errors whose
+  signature already occurred are `recurring`: they go to `bugs.json` but don't fail the feature.
 - **executing**: one Agent SDK `query()` scoped to this feature. Prompt = feature spec, the
   playbook for its type plus `common.md`, and the last verifier diagnostics (on recovery).
   Max ~25 turns (`maxTurns`). The agent ends by calling `report_feature_done({summary})`.
@@ -146,8 +154,11 @@ any state --cancel--> cancelling → reporting → cancelled
   1. Compare the current object set with the baseline. If the only new objects are the failed
      feature's partial objects, the agent is instructed to delete exactly those (by name/ID shown
      in the diagnostics) via the UI feature tree.
-  2. Re-snapshot. If the state doesn't equal the baseline (extra or missing objects), stop:
-     run `failed`, reason "unsafe to recover: model state diverged from baseline".
+     If any baseline object was modified or removed (§ baseline), recovery is not attempted:
+     run `failed`, reason "unsafe to recover: existing objects modified — restart required".
+  2. Re-snapshot. If the state isn't exactly the baseline (same ids, same hashes, ignoring
+     `volatileClasses`), or that can't be verified (inspector error), stop: run `failed`, reason
+     "unsafe to recover: restoration not verified — restart required".
   3. Otherwise retry `executing` with diagnostics. Max 2 recovery attempts per feature.
   Ctrl+Z / undo is **not** used unless Task 0 shows undo history can be scoped to the
   failed feature's marks. That decision is recorded in `docs/inspector-fields.md`.
@@ -171,14 +182,21 @@ any state --cancel--> cancelling → reporting → cancelled
 ## 8. Agent tool boundary
 
 The executor's `query()` is configured with:
-- `mcpServers`: `playwright` (stdio, `@playwright/mcp --user-data-dir <ai-cad/.profile>`) and
-  `ivy` (the inspector, HTTP, read-only), plus an in-process SDK MCP server exposing only
-  `report_feature_done`.
-- `allowedTools`: only the `mcp__playwright__*` browser tools, `mcp__ivy__*`, and
-  `report_feature_done`. Built-in tools (Bash, Read, Write, Edit, WebFetch, etc.) are
-  disallowed. The model never gets shell or filesystem access.
+- `mcpServers`: `playwright` (stdio, `@playwright/mcp --cdp-endpoint <harness browser>`), plus an
+  in-process SDK MCP server exposing only `report_feature_done`. The agent does **not** get the
+  inspector: the harness alone verifies, which keeps the agent from grading its own work.
+- `tools: []` (no built-ins), `settingSources: []`, and a `canUseTool` gate allowing only
+  `mcp__playwright__*` (minus the denied tools below) and `report_feature_done`. The model never
+  gets shell or filesystem access.
 - The planner's `query()` has no tools: plain JSON output.
 - Process start/stop, file writes and screenshots for reports are done by harness code, not the model.
+
+Browser process: the harness launches one Chromium (`launchPersistentContext(.profile)` with a
+CDP port) and keeps it for the whole run. The harness records console errors and takes screenshots
+from it. Each `query()` starts `@playwright/mcp --cdp-endpoint` attached to that same browser, so CAD
+state persists across features. `canUseTool` denies `browser_evaluate`, `browser_run_code`,
+`browser_close`, `browser_install`, `browser_file_upload`, `browser_tabs`, and navigation outside
+`FRONTEND_URL`'s origin.
 
 Browser ownership: the harness owns `.profile`. `login.bat` is the only manual use. If the
 profile is locked (Chrome already open on it) when a run starts, the run fails fast with
