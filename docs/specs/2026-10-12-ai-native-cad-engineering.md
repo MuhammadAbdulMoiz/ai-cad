@@ -67,7 +67,8 @@ Before anything executes, validation rejects:
 
 ## 5. Execution
 
-1. **Target:** an explicitly supplied `projectId` and `documentId`. The system never auto-creates projects and never picks "last listed". Creating a document for a clean rebuild requires per-build approval (pending decision).
+1. **Target:** an explicitly supplied `projectId` and `documentId`. The system never auto-creates projects and never picks "last listed". Creating a document for a clean rebuild is allowed **only with per-build approval** of the build and its destination (decided 2026-10-12).
+   **First live target (supplied 2026-10-12):** `projectId = 37649980`, editor URL `id = 37649982` (assumed documentId; to be confirmed by the zcad_service task, protocol-spike §6 item 2).
 2. **Per feature (or per Toolbox build):** baseline snapshot → execute through MCP → read the result code → verify, comparing the snapshot diff and measurements with the plan.
 3. **Failure:** diagnose, and *propose* a plan revision. **Repair = revised plan + clean rebuild** into an approved destination. The system never edits a possibly corrupted model in place. Recovery by in-place mutation **stays disabled** until restoration can be proven.
 
