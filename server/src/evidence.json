@@ -1,0 +1,17 @@
+{
+  "excludeClasses": ["ivy::Project", "ivy::PipelineContext", "ivy::VisuGeomObject"],
+  "featureClass": { "sketch_rectangle": "ivy::FeatSketch", "extrude": "ivy::SolidExtrude" },
+  "bodyClass": null,
+  "volatileClasses": [],
+  "supported": {
+    "feature_exists": true,
+    "depends_on": true,
+    "existing_features_intact": true,
+    "reopen_matches": true,
+    "no_new_console_errors": true,
+    "status_ok": false,
+    "dimension": false,
+    "body_count": false,
+    "no_unexpected_modification": false
+  }
+}
