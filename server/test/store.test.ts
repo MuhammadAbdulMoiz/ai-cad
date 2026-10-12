@@ -44,6 +44,14 @@ describe('RunStore', () => {
     s.append('phase', { phase: 'designing' });
     expect(s.readEvents().map((e) => e.type)).toEqual(['run_start', 'phase']);
   });
+  it('event data cannot overwrite the reserved type or timestamp', () => {
+    const s = RunStore.create(dir, 'p');
+    expect(() => s.append('step_start', { type: 'sketch' })).toThrow(/reserved field "type"/);
+    expect(() => s.append('step_start', { t: 'yesterday' })).toThrow(/reserved field "t"/);
+    s.append('run_end', { verdict: 'passed' });
+    expect(s.readEvents().map((e) => e.type)).toEqual(['run_start', 'run_end']);
+    expect(runVerdict(s.readEvents())).toBe('passed');
+  });
   it('run with no run_end is interrupted (process killed)', () => {
     const s = RunStore.create(dir, 'plate');
     s.append('phase', { phase: 'executing' });

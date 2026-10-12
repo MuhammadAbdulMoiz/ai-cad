@@ -32,6 +32,8 @@ export class RunStore {
     return new RunStore(id, dir);
   }
   append(type: string, data: Record<string, unknown> = {}): RunEvent {
+    // t and type are authoritative: a data field overwriting them would silently corrupt the run log
+    for (const k of ['t', 'type']) if (Object.hasOwn(data, k)) throw new Error(`event data must not set reserved field "${k}"`);
     const ev = { t: new Date().toISOString(), type, ...data };
     fs.appendFileSync(path.join(this.dir, 'events.jsonl'), JSON.stringify(ev) + '\n');
     return ev;
