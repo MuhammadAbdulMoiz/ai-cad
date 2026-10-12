@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseGraph, parseSnapshot, loadEvidence } from '../src/adapter';
+import { parseGraph, parseSnapshot, loadEvidence, validateEvidence } from '../src/adapter';
 import { diffSnapshots, sameAsBaseline } from '../src/snapshot';
 import { InspectorError } from '../src/inspector';
 
@@ -16,6 +16,8 @@ function snap(label: string) {
   return parseSnapshot(graph, objects, ev);
 }
 const ofClass = (s: ReturnType<typeof snap>, cls: string) => [...s.objects.values()].filter((o) => o.cls === cls);
+const PROJ = '0 [label="ivy::Project", shape=box];';
+const feat = (uuid: string, id = 1) => `{"uuid":"${uuid}","class_name":"ivy::FeatPart","attr_first_":{"_id":${id},"_name":"p"}}`;
 
 describe('adapter on real Task 0 captures', () => {
   it('02-after-extrude has exactly one sketch and one extrude (Q3)', () => {
@@ -51,12 +53,43 @@ describe('adapter on real Task 0 captures', () => {
     }
   });
   it('fails closed on a non-JSON reply for a model object (Q1)', () => {
-    const graph = parseGraph('digraph G {\n  "7" [label="ivy::FeatSketch 7"];\n}');
+    const graph = parseGraph(`digraph G {\n${PROJ}\n  "7" [label="ivy::FeatSketch 7"];\n}`);
     expect(() => parseSnapshot(graph, new Map([[7, 'Object not found.']]), ev)).toThrow(InspectorError);
     expect(() => parseSnapshot(graph, new Map(), ev)).toThrow(InspectorError);
   });
   it('skips excluded classes even when they reply "Object not found." (Q1)', () => {
-    const graph = parseGraph('digraph G {\n0 [label="ivy::Project", shape=box];\n  "99" [label="ivy::PipelineContext 99"];\n}');
-    expect(parseSnapshot(graph, new Map([[0, ''], [99, 'Object not found.']]), ev).objects.size).toBe(0);
+    const graph = parseGraph(`digraph G {\n${PROJ}\n  "99" [label="ivy::PipelineContext 99"];\n  "5" [label="ivy::FeatPart 5"];\n}`);
+    const objs = new Map<number, string>([[0, ''], [99, 'Object not found.'], [5, feat('u1')]]);
+    expect(parseSnapshot(graph, objs, ev).objects.size).toBe(1);
+  });
+  it('throws on an empty graph (no Project root, no features)', () => {
+    expect(() => parseSnapshot(parseGraph(''), new Map(), ev)).toThrow(InspectorError);
+  });
+  it('throws when the graph has only excluded nodes (no features)', () => {
+    const graph = parseGraph(`digraph G {\n${PROJ}\n  "99" [label="ivy::PipelineContext 99"];\n}`);
+    expect(() => parseSnapshot(graph, new Map([[0, ''], [99, 'Object not found.']]), ev)).toThrow(/no feature objects/);
+  });
+  it('throws when the graph has no ivy::Project root', () => {
+    const graph = parseGraph('digraph G {\n  "5" [label="ivy::FeatPart 5"];\n}');
+    expect(() => parseSnapshot(graph, new Map([[5, feat('u1')]]), ev)).toThrow(/no ivy::Project root node/);
+  });
+  it('throws on a duplicate uuid instead of silently dropping one', () => {
+    const graph = parseGraph(`digraph G {\n${PROJ}\n  "5" [label="ivy::FeatPart 5"];\n  "6" [label="ivy::FeatPart 6"];\n}`);
+    expect(() => parseSnapshot(graph, new Map([[0, ''], [5, feat('u1')], [6, feat('u1', 2)]]), ev)).toThrow(/duplicate uuid u1/);
+  });
+  it('a dependency cycle does not list a feature as its own dependency', () => {
+    const graph = parseGraph(`digraph G {\n${PROJ}\n  "5" [label="ivy::FeatPart 5"];\n  "6" [label="ivy::FeatPart 6"];\n  "5" -> "6" [label="DependsOn"];\n  "6" -> "5" [label="DependsOn"];\n  "6" -> "6" [label="DependsOn"];\n}`);
+    const objs = new Map<number, string>([[0, ''], [5, feat('u5', 1)], [6, feat('u6', 2)]]);
+    const s = parseSnapshot(graph, objs, ev);
+    expect(s.objects.get('u5')!.deps).toEqual(['u6']);
+    expect(s.objects.get('u6')!.deps).toEqual(['u5']);
+  });
+  it('validateEvidence accepts the real evidence.json', () => {
+    expect(() => validateEvidence(structuredClone(loadEvidence()))).not.toThrow();
+  });
+  it('validateEvidence rejects a missing supported key', () => {
+    const bad = structuredClone(loadEvidence()) as any;
+    delete bad.supported.dimension;
+    expect(() => validateEvidence(bad)).toThrow(/invalid evidence\.json/);
   });
 });
