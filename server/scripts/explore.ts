@@ -137,7 +137,8 @@ async function main() {
     await shot(page, 'sketch-panel');
     await page.getByText('Confirm', { exact: true }).last().click({ timeout: 10000 }) /* not an a11y button (observed) */;
     await page.getByText('Exit Sketch').first().waitFor({ timeout: 20000 });
-    note('toolbar:sketch', { items: await scanToolbar(page) });
+    const sketchTools = await scanToolbar(page);
+    note('toolbar:sketch', { items: sketchTools });
     await shot(page, 'sketch-mode');
 
     // 5. Rectangle via inline dimension inputs, typed slowly; record what the inputs look like
@@ -146,7 +147,7 @@ async function main() {
       return c && { x: c.left + c.width / 2, y: c.top + c.height / 2 };
     });
     if (!canvas) throw new Error('no canvas found');
-    const sk = (await scanToolbar(page)).sort((p, q) => p.x - q.x);
+    const sk = [...sketchTools].sort((p, q) => p.x - q.x); // reuse: a re-scan is disturbed by menus the first scan opened
     // The rectangle button shows a variant menu instead of a tooltip (observed); it sits right after 'Line'.
     const lineIdx = sk.findIndex((b) => /^Line/.test(b.tooltip));
     const rectBtn = sk.find((b) => /Rectangle/i.test(b.tooltip)) ?? (lineIdx >= 0 ? sk[lineIdx + 1] : undefined);
