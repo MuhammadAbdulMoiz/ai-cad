@@ -146,7 +146,10 @@ async function main() {
       return c && { x: c.left + c.width / 2, y: c.top + c.height / 2 };
     });
     if (!canvas) throw new Error('no canvas found');
-    const rectBtn = (await scanToolbar(page)).find((b) => /Corner Rectangle|Rectangle/i.test(b.tooltip));
+    const sk = (await scanToolbar(page)).sort((p, q) => p.x - q.x);
+    // The rectangle button shows a variant menu instead of a tooltip (observed); it sits right after 'Line'.
+    const lineIdx = sk.findIndex((b) => /^Line/.test(b.tooltip));
+    const rectBtn = sk.find((b) => /Rectangle/i.test(b.tooltip)) ?? (lineIdx >= 0 ? sk[lineIdx + 1] : undefined);
     note('rect:button', { rectBtn });
     if (!rectBtn) throw new Error('rectangle tool not found by tooltip');
     await page.mouse.click(rectBtn.x, rectBtn.y); // exactly once: a second click toggles construction mode (observed)
