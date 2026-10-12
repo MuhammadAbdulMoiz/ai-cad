@@ -13,8 +13,8 @@ Supported feature types and params:
 - sketch_rectangle: { "plane": "XY"|"XZ"|"YZ", "width": mm>0, "height": mm>0 }
 - extrude: { "depth": mm>0 }   (must depend on a sketch_rectangle)
 
-Check kinds: ${CHECK_KINDS.join(', ')}. Useful: {"kind":"dimension","expect":{"name":"depth","value":8}},
-acceptance {"kind":"body_count","expect":1}.
+Check kinds: ${CHECK_KINDS.join(', ')}.
+Prefer checks the harness can currently prove: feature_exists, depends_on (and acceptance reopen_matches). dimension, status_ok and body_count are accepted but currently report "unsupported" and cannot pass.
 
 If the request needs ANY operation other than ${FEATURE_TYPES.join(', ')} (holes, fillets, revolves, patterns,
 assemblies...), still include it as a feature with its real name as "type" (e.g. "hole"). Never drop or
