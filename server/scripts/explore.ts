@@ -94,7 +94,11 @@ async function main() {
   try {
     // 1. Home + login check
     await page.goto(`${origin}/p/home`, { waitUntil: 'domcontentloaded' });
-    await page.evaluate(() => localStorage.setItem('use_local_server', 'true')); // dev flag: talk to local zcad_service
+    await page.evaluate(() => {
+      localStorage.setItem('use_local_server', 'true'); // dev flag: talk to local zcad_service
+      localStorage.setItem('userLanguage', JSON.stringify('en-US')); // deterministic UI language = en-US i18n strings
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
     const home = await page.getByText('New 3D Design').first().waitFor({ timeout: 30000 }).then(() => true, () => false);
     await shot(page, 'home');
     if (!home) { note('login', { ok: false, hint: 'Not logged in (no "New 3D Design"). Run login.bat first.', url: page.url() }); return; }
