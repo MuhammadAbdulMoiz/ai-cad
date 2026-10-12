@@ -381,100 +381,268 @@ This is done by the planning model (Opus), not Haiku. Every answer quotes eviden
 - [ ] **Step 3:** Commit.
 - [ ] **Step 4 [GATE]:** The human reviews the doc. Nothing proceeds until they approve. Opus then writes Task 5's code into this plan.
 
-### Task 5: Evidence file + inspector adapter (code written by Opus after the Task 4 gate)
+### Task 5: Evidence file + inspector adapter (evidence-approved 2026-10-12)
 
-**Files:** Create `server/src/evidence.json`, `server/src/adapter.ts`. Test: `server/test/adapter.test.ts` (uses the real Task 3 fixtures). Implement **after Tasks 6 and 9**.
+**Files:** Create `server/src/evidence.json`, `server/src/adapter.ts`. Test: `server/test/adapter.test.ts`, which runs on the **real** Task 0 fixtures in `server/test/fixtures/inspector/`. Implement **after Tasks 6 and 9**.
 
-**Interfaces (fixed now):**
-- `Evidence` type: defined in `checks.ts` (Task 9) and imported here. Stored in `evidence.json`:
-  ```ts
-  type Evidence = {
-    idRegex: string;                 // Q1
-    classPath: string;               // Q2, dot path into object JSON
-    featureClass: Record<FeatureType, string>;  // Q3
-    bodyClass: string | null;        // Q10
-    volatileClasses: string[];       // Q7
-    stripPaths: string[];            // Q7, dot paths removed before hashing
-    supported: Record<CheckKind, boolean>;      // Task 4 table
-  };
-  ```
-- `parseSnapshot(dot: string, objects: Record<number, string>, ev: Evidence): ModelSnapshot`, which is pure.
-- `takeSnapshot(ins: Inspector, proj: ProjectRef, ev: Evidence): Promise<ModelSnapshot>`. It throws `InspectorError` on any failed call and never returns a partial snapshot.
-- `findProject(ins: Inspector): Promise<ProjectRef>` where `ProjectRef = {projectId: number; projectTag: string}`. It returns the last listed project, or throws `InspectorError('no active Ivy project')`.
-- `loadEvidence(): Evidence` reads `evidence.json`.
+Every rule here comes from `docs/inspector-fields.md`. The Q-numbers in the comments refer to it.
 
-**Required tests:**
-- On `02-after-extrude` there is exactly one object whose class is `featureClass.extrude`.
-- `diffSnapshots(01, 02)`: `added` includes the extrude, and `modified` contains only `volatileClasses`.
-- `diffSnapshots(01, 03-after-edit-sketch)` reports the sketch in `modified`.
-- Fields that `supported` marks false stay `undefined`.
+**Interfaces:**
+- Consumes: `Inspector`, `InspectorError` (Task 1); `fingerprint`, `ModelSnapshot`, `SnapObject` (Task 6); `Evidence` (Task 9, `checks.ts`).
+- Produces:
+```ts
+export type ProjectRef = { projectId: number; projectTag: string };
+export type Graph = { nodes: Map<number, string /* class */>; dependsOn: Map<number, number[]> };
+export function loadEvidence(): Evidence;
+export function parseGraph(dot: string): Graph;
+export function parseSnapshot(graph: Graph, objects: Map<number, string>, ev: Evidence): ModelSnapshot;  // pure
+export function takeSnapshot(ins: Inspector, proj: ProjectRef, ev: Evidence): Promise<ModelSnapshot>; // all-or-nothing
+export function findProject(ins: Inspector): Promise<ProjectRef>;
+```
+Rules:
+- Nodes whose class is in `ev.excludeClasses` are never fetched (Q1: `ivy::Project` returns "", `ivy::PipelineContext` returns `Object not found.` without an error; `ivy::VisuGeomObject` is replaced on every recompute, Q7).
+- Every other node must return JSON with string `uuid` and `class_name`. Anything else **throws `InspectorError`**, which fails closed.
+- The snapshot contains only feature objects (JSON has `attr_first_`, Q2). Key = `uuid` (handles are reassigned on reopen, Q3/Q9). `hash = fingerprint([class_name, attr_first_._id, attr_first_._name])`, a structural fingerprint (Q7: whole-JSON hashes aren't stable).
+- `deps` = keys of feature objects reachable from the node over DOT `DependsOn` edges, transitively, through any node (Q4: extrude → FeatGeomBRep → sketch).
+- `statusOk` and `dims` are never set (Q5/Q6 unsupported).
 
-**Acceptance:** tests pass on the real fixtures. Each `evidence.json` value cites its Q-number in the commit message.
+- [ ] **Step 1: Write `server/src/evidence.json`**
+```json
+{
+  "excludeClasses": ["ivy::Project", "ivy::PipelineContext", "ivy::VisuGeomObject"],
+  "featureClass": { "sketch_rectangle": "ivy::FeatSketch", "extrude": "ivy::SolidExtrude" },
+  "bodyClass": null,
+  "volatileClasses": [],
+  "supported": {
+    "feature_exists": true,
+    "depends_on": true,
+    "existing_features_intact": true,
+    "reopen_matches": true,
+    "no_new_console_errors": true,
+    "status_ok": false,
+    "dimension": false,
+    "body_count": false,
+    "no_unexpected_modification": false
+  }
+}
+```
+- [ ] **Step 2: Failing test `server/test/adapter.test.ts`**
+```ts
+import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+import { parseGraph, parseSnapshot, loadEvidence } from '../src/adapter';
+import { diffSnapshots, sameAsBaseline } from '../src/snapshot';
+import { InspectorError } from '../src/inspector';
+
+const FIX = path.join(import.meta.dirname, 'fixtures', 'inspector');
+const ev = loadEvidence();
+function snap(label: string) {
+  const dir = path.join(FIX, label);
+  const graph = parseGraph(fs.readFileSync(path.join(dir, 'graph-full.dot'), 'utf8'));
+  const objects = new Map<number, string>();
+  for (const f of fs.readdirSync(path.join(dir, 'objects')))
+    objects.set(Number(f.replace('.json', '')), fs.readFileSync(path.join(dir, 'objects', f), 'utf8'));
+  return parseSnapshot(graph, objects, ev);
+}
+const ofClass = (s: ReturnType<typeof snap>, cls: string) => [...s.objects.values()].filter((o) => o.cls === cls);
+
+describe('adapter on real Task 0 captures', () => {
+  it('02-after-extrude has exactly one sketch and one extrude (Q3)', () => {
+    const s = snap('02-after-extrude');
+    expect(ofClass(s, 'ivy::FeatSketch')).toHaveLength(1);
+    expect(ofClass(s, 'ivy::SolidExtrude')).toHaveLength(1);
+  });
+  it('extrude transitively depends on the sketch (Q4)', () => {
+    const s = snap('02-after-extrude');
+    const [sk] = ofClass(s, 'ivy::FeatSketch');
+    const [ex] = ofClass(s, 'ivy::SolidExtrude');
+    expect(ex.deps).toContain(sk.key);
+  });
+  it('01 -> 02: extrude added, no pre-existing feature removed or changed (Q7 fingerprint ignores _featOptions)', () => {
+    const d = diffSnapshots(snap('01-after-sketch'), snap('02-after-extrude'), ev.volatileClasses);
+    expect(d.added.map((o) => o.cls)).toContain('ivy::SolidExtrude');
+    expect(d.removed).toEqual([]);
+    expect(d.modified).toEqual([]);
+  });
+  it('reopen keeps every feature by uuid and fingerprint (Q9)', () => {
+    expect(sameAsBaseline(snap('06-after-undo'), snap('07-after-reopen'), ev.volatileClasses)).toBe(true);
+  });
+  it('delete extrude restores the sketch-only structure (Q8; structure only, recovery stays disabled)', () => {
+    expect(sameAsBaseline(snap('01-after-sketch'), snap('04-after-delete-extrude'), ev.volatileClasses)).toBe(true);
+  });
+  it('documents the Q6 blind spot: a 100->120 sketch edit is structurally invisible', () => {
+    expect(sameAsBaseline(snap('02-after-extrude'), snap('03-after-edit-sketch'), ev.volatileClasses)).toBe(true);
+  });
+  it('unsupported fields stay undefined (Q5, Q6)', () => {
+    for (const o of snap('02-after-extrude').objects.values()) {
+      expect(o.statusOk).toBeUndefined();
+      expect(o.dims).toBeUndefined();
+    }
+  });
+  it('fails closed on a non-JSON reply for a model object (Q1)', () => {
+    const graph = parseGraph('digraph G {\n  "7" [label="ivy::FeatSketch 7"];\n}');
+    expect(() => parseSnapshot(graph, new Map([[7, 'Object not found.']]), ev)).toThrow(InspectorError);
+    expect(() => parseSnapshot(graph, new Map(), ev)).toThrow(InspectorError);
+  });
+  it('skips excluded classes even when they reply "Object not found." (Q1)', () => {
+    const graph = parseGraph('digraph G {\n0 [label="ivy::Project", shape=box];\n  "99" [label="ivy::PipelineContext 99"];\n}');
+    expect(parseSnapshot(graph, new Map([[0, ''], [99, 'Object not found.']]), ev).objects.size).toBe(0);
+  });
+});
+```
+If the reopen test (Q9) or the delete test (Q8) fails, **stop and report it**. Don't adjust the test: it means the evidence analysis was wrong, and that is a human decision.
+- [ ] **Step 3:** Run `pnpm test test/adapter.test.ts`. Expect FAIL (module missing).
+- [ ] **Step 4: Implement `server/src/adapter.ts`**
+```ts
+import evidenceJson from './evidence.json';
+import type { Evidence } from './checks';
+import { Inspector, InspectorError } from './inspector';
+import { fingerprint, type ModelSnapshot, type SnapObject } from './snapshot';
+
+export type ProjectRef = { projectId: number; projectTag: string };
+export type Graph = { nodes: Map<number, string>; dependsOn: Map<number, number[]> };
+
+export function loadEvidence(): Evidence {
+  return evidenceJson as Evidence;
+}
+
+/** Q1: node lines look like `  "539" [label="ivy::FeatSketch 539\n12 草图1", ...]` (root `0` is unquoted). */
+export function parseGraph(dot: string): Graph {
+  const nodes = new Map<number, string>();
+  for (const m of dot.matchAll(/^\s*"?(\d+)"?\s*\[label="([^"\s]+)/gm)) nodes.set(Number(m[1]), m[2]);
+  const dependsOn = new Map<number, number[]>();
+  for (const m of dot.matchAll(/"(\d+)" -> "(\d+)" \[label="DependsOn"/g)) {
+    const from = Number(m[1]);
+    dependsOn.set(from, [...(dependsOn.get(from) ?? []), Number(m[2])]);
+  }
+  return { nodes, dependsOn };
+}
+
+export function parseSnapshot(graph: Graph, objects: Map<number, string>, ev: Evidence): ModelSnapshot {
+  const features = new Map<number, SnapObject>();
+  for (const [handle, cls] of graph.nodes) {
+    if (ev.excludeClasses.includes(cls)) continue;
+    const raw = objects.get(handle);
+    if (raw === undefined) throw new InspectorError(`no object JSON for ${cls} #${handle}`);
+    let j: any;
+    try { j = JSON.parse(raw); } catch { throw new InspectorError(`${cls} #${handle}: non-JSON reply: ${raw.slice(0, 80)}`); }
+    if (typeof j?.uuid !== 'string' || typeof j?.class_name !== 'string')
+      throw new InspectorError(`${cls} #${handle}: reply lacks uuid/class_name`);
+    if (!j.attr_first_) continue; // containers and runtime plumbing are not model features (Q2)
+    const a = j.attr_first_;
+    features.set(handle, {
+      key: j.uuid, handle, cls: j.class_name, featId: a._id, name: a._name,
+      hash: fingerprint([j.class_name, a._id, a._name]),
+    });
+  }
+  for (const [handle, obj] of features) {
+    const seen = new Set<number>();
+    const stack = [...(graph.dependsOn.get(handle) ?? [])];
+    while (stack.length) {
+      const h = stack.pop()!;
+      if (seen.has(h)) continue;
+      seen.add(h);
+      stack.push(...(graph.dependsOn.get(h) ?? []));
+    }
+    obj.deps = [...seen].filter((h) => features.has(h)).map((h) => features.get(h)!.key);
+  }
+  return { objects: new Map([...features.values()].map((o) => [o.key, o])) };
+}
+
+export async function takeSnapshot(ins: Inspector, proj: ProjectRef, ev: Evidence): Promise<ModelSnapshot> {
+  const pa = { projectId: proj.projectId, projectTag: proj.projectTag };
+  const graph = parseGraph(await ins.call('zcad_get_object_graph', { ...pa, rootEntityId: 0, compactMode: false }));
+  const objects = new Map<number, string>();
+  for (const [handle, cls] of graph.nodes) {
+    if (!ev.excludeClasses.includes(cls)) objects.set(handle, await ins.call('zcad_get_object_json', { ...pa, objectId: handle }));
+  }
+  return parseSnapshot(graph, objects, ev);
+}
+
+export async function findProject(ins: Inspector): Promise<ProjectRef> {
+  const text = await ins.call('zcad_list_projects');
+  let list: unknown;
+  try { list = JSON.parse(text); } catch { throw new InspectorError(`unexpected zcad_list_projects reply: ${text.slice(0, 200)}`); }
+  if (!Array.isArray(list)) throw new InspectorError(`unexpected zcad_list_projects reply: ${text.slice(0, 200)}`);
+  const p = list.at(-1);
+  if (!p) throw new InspectorError('no active Ivy project');
+  return { projectId: Number(p.projectId), projectTag: String(p.projectTag) };
+}
+```
+- [ ] **Step 5:** Run the tests, expect 9 PASS. Run `pnpm typecheck`; `resolveJsonModule` is already on.
+- [ ] **Step 6:** Commit: `feat: evidence-based inspector adapter (uuid keys, structural fingerprints)`.
+
+**Acceptance:** all 9 tests pass on the real fixtures, without changing any expectation. Non-JSON or incomplete replies throw. Unsupported fields stay undefined.
 
 ---
 
 # Milestone 2: Core logic (Tasks 6–10: pure, no live Ivy)
 
-Tasks 6–10 don't depend on Task 0 values, so they can be built while the Task 4 review is pending. Task 6 must land before Task 5.
+Tasks 6–10 don't depend on Task 0 values. Order: 6 → 9 → 5 → 7 → 8 → 10.
 
-### Task 6: Snapshot types + diff (requirement 1: detect modification of existing objects)
+### Task 6: Snapshot types + diff (structural, uuid-keyed)
 
 **Files:** Create `server/src/snapshot.ts`. Test: `server/test/snapshot.test.ts`.
 
 **Interfaces — Produces:**
 ```ts
 export type SnapObject = {
-  id: number; cls: string; name?: string; hash: string;
-  deps?: number[];                  // undefined = unsupported
+  key: string;                      // persistent uuid (handles change on reopen)
+  handle: number;                   // inspector objectId, valid in this session only
+  cls: string;
+  featId?: number;                  // attr_first_._id
+  name?: string;                    // attr_first_._name
+  hash: string;                     // structural fingerprint
+  deps?: string[];                  // keys this object depends on; undefined = unsupported
   statusOk?: boolean;               // undefined = unsupported
   dims?: Record<string, number>;    // undefined = unsupported
 };
-export type ModelSnapshot = { objects: Map<number, SnapObject> };
+export type ModelSnapshot = { objects: Map<string, SnapObject> };
 export type SnapDiff = { added: SnapObject[]; removed: SnapObject[]; modified: SnapObject[] };
-export function hashJson(value: unknown, stripPaths: string[]): string;
+export function fingerprint(parts: unknown[]): string;   // sha1 hex of JSON.stringify(parts)
 export function diffSnapshots(base: ModelSnapshot, cur: ModelSnapshot, volatileClasses: string[]): SnapDiff;
 export function sameAsBaseline(base: ModelSnapshot, cur: ModelSnapshot, volatileClasses: string[]): boolean;
 ```
-Rules: `added` = ids only in `cur` (never filtered). `removed` = ids only in `base` whose class isn't volatile. `modified` = shared ids with a different hash whose class isn't volatile. `hashJson` deletes each dot path (e.g. `meta.updatedAt`), serializes with sorted keys, and returns a sha1 hex.
+Rules: `added` = keys only in `cur` (never filtered). `removed` = keys only in `base` whose class isn't volatile. `modified` = shared keys with a different `hash` whose class isn't volatile.
 
 - [ ] **Step 1: Failing test `server/test/snapshot.test.ts`**
 ```ts
 import { describe, it, expect } from 'vitest';
-import { diffSnapshots, sameAsBaseline, hashJson, type ModelSnapshot, type SnapObject } from '../src/snapshot';
+import { diffSnapshots, sameAsBaseline, fingerprint, type ModelSnapshot, type SnapObject } from '../src/snapshot';
 
-const snap = (...o: SnapObject[]): ModelSnapshot => ({ objects: new Map(o.map((x) => [x.id, x])) });
-const o = (id: number, cls: string, hash: string): SnapObject => ({ id, cls, hash });
+const snap = (...o: SnapObject[]): ModelSnapshot => ({ objects: new Map(o.map((x) => [x.key, x])) });
+const o = (key: string, cls: string, hash: string): SnapObject => ({ key, handle: 0, cls, hash });
 
-describe('hashJson', () => {
-  it('ignores key order and stripped paths', () => {
-    expect(hashJson({ a: 1, b: { t: 5, v: 2 } }, ['b.t'])).toBe(hashJson({ b: { v: 2, t: 9 }, a: 1 }, ['b.t']));
-  });
-  it('detects real changes', () => {
-    expect(hashJson({ w: 100 }, [])).not.toBe(hashJson({ w: 120 }, []));
+describe('fingerprint', () => {
+  it('is stable for equal parts and differs otherwise', () => {
+    expect(fingerprint(['ivy::FeatSketch', 12, '草图1'])).toBe(fingerprint(['ivy::FeatSketch', 12, '草图1']));
+    expect(fingerprint(['ivy::FeatSketch', 12, '草图1'])).not.toBe(fingerprint(['ivy::FeatSketch', 12, '草图2']));
   });
 });
 
 describe('diffSnapshots', () => {
-  const base = snap(o(1, 'Doc', 'h1'), o(2, 'Sketch', 'h2'));
+  const base = snap(o('u-doc', 'Doc', 'h1'), o('u-sk', 'Sketch', 'h2'));
   it('reports added objects', () => {
-    const d = diffSnapshots(base, snap(o(1, 'Doc', 'h1'), o(2, 'Sketch', 'h2'), o(3, 'Extrude', 'h3')), []);
-    expect(d.added.map((x) => x.id)).toEqual([3]);
+    const d = diffSnapshots(base, snap(o('u-doc', 'Doc', 'h1'), o('u-sk', 'Sketch', 'h2'), o('u-ex', 'Extrude', 'h3')), []);
+    expect(d.added.map((x) => x.key)).toEqual(['u-ex']);
     expect(d.modified).toEqual([]); expect(d.removed).toEqual([]);
   });
-  it('reports modified pre-existing object (sketch edited)', () => {
-    const d = diffSnapshots(base, snap(o(1, 'Doc', 'h1'), o(2, 'Sketch', 'CHANGED')), []);
-    expect(d.modified.map((x) => x.id)).toEqual([2]);
+  it('same key with a new handle is the same object (reopen)', () => {
+    const moved = snap({ ...o('u-doc', 'Doc', 'h1'), handle: 900 }, { ...o('u-sk', 'Sketch', 'h2'), handle: 901 });
+    expect(sameAsBaseline(base, moved, [])).toBe(true);
   });
-  it('reports removed pre-existing object', () => {
-    expect(diffSnapshots(base, snap(o(1, 'Doc', 'h1')), []).removed.map((x) => x.id)).toEqual([2]);
+  it('reports a structurally changed pre-existing object', () => {
+    expect(diffSnapshots(base, snap(o('u-doc', 'Doc', 'h1'), o('u-sk', 'Sketch', 'CHANGED')), []).modified.map((x) => x.key)).toEqual(['u-sk']);
+  });
+  it('reports a removed pre-existing object', () => {
+    expect(diffSnapshots(base, snap(o('u-doc', 'Doc', 'h1')), []).removed.map((x) => x.key)).toEqual(['u-sk']);
   });
   it('ignores volatile classes for modified/removed', () => {
-    const d = diffSnapshots(base, snap(o(1, 'Doc', 'CHANGED'), o(2, 'Sketch', 'h2')), ['Doc']);
-    expect(d.modified).toEqual([]);
+    expect(diffSnapshots(base, snap(o('u-doc', 'Doc', 'CHANGED'), o('u-sk', 'Sketch', 'h2')), ['Doc']).modified).toEqual([]);
   });
-  it('sameAsBaseline true only when nothing added/removed/modified', () => {
-    expect(sameAsBaseline(base, snap(o(1, 'Doc', 'h1'), o(2, 'Sketch', 'h2')), [])).toBe(true);
-    expect(sameAsBaseline(base, snap(o(1, 'Doc', 'h1'), o(2, 'Sketch', 'h2'), o(9, 'X', 'h')), [])).toBe(false);
+  it('sameAsBaseline false when anything was added', () => {
+    expect(sameAsBaseline(base, snap(o('u-doc', 'Doc', 'h1'), o('u-sk', 'Sketch', 'h2'), o('u-x', 'X', 'h')), [])).toBe(false);
   });
 });
 ```
@@ -484,34 +652,22 @@ describe('diffSnapshots', () => {
 import { createHash } from 'node:crypto';
 
 export type SnapObject = {
-  id: number; cls: string; name?: string; hash: string;
-  deps?: number[]; statusOk?: boolean; dims?: Record<string, number>;
+  key: string; handle: number; cls: string; featId?: number; name?: string; hash: string;
+  deps?: string[]; statusOk?: boolean; dims?: Record<string, number>;
 };
-export type ModelSnapshot = { objects: Map<number, SnapObject> };
+export type ModelSnapshot = { objects: Map<string, SnapObject> };
 export type SnapDiff = { added: SnapObject[]; removed: SnapObject[]; modified: SnapObject[] };
 
-function strip(value: any, path: string[]): void {
-  if (value == null || typeof value !== 'object') return;
-  if (path.length === 1) { delete value[path[0]]; return; }
-  strip(value[path[0]], path.slice(1));
-}
-function canonical(v: any): any {
-  if (Array.isArray(v)) return v.map(canonical);
-  if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map((k) => [k, canonical(v[k])]));
-  return v;
-}
-export function hashJson(value: unknown, stripPaths: string[]): string {
-  const copy = structuredClone(value);
-  for (const p of stripPaths) strip(copy, p.split('.'));
-  return createHash('sha1').update(JSON.stringify(canonical(copy))).digest('hex');
+export function fingerprint(parts: unknown[]): string {
+  return createHash('sha1').update(JSON.stringify(parts)).digest('hex');
 }
 
 export function diffSnapshots(base: ModelSnapshot, cur: ModelSnapshot, volatileClasses: string[]): SnapDiff {
   const vol = new Set(volatileClasses);
-  const added = [...cur.objects.values()].filter((o) => !base.objects.has(o.id));
-  const removed = [...base.objects.values()].filter((o) => !cur.objects.has(o.id) && !vol.has(o.cls));
+  const added = [...cur.objects.values()].filter((o) => !base.objects.has(o.key));
+  const removed = [...base.objects.values()].filter((o) => !cur.objects.has(o.key) && !vol.has(o.cls));
   const modified = [...base.objects.values()].filter((o) => {
-    const c = cur.objects.get(o.id);
+    const c = cur.objects.get(o.key);
     return c && c.hash !== o.hash && !vol.has(o.cls);
   });
   return { added, removed, modified };
@@ -522,10 +678,11 @@ export function sameAsBaseline(base: ModelSnapshot, cur: ModelSnapshot, volatile
   return !d.added.length && !d.removed.length && !d.modified.length;
 }
 ```
-- [ ] **Step 4:** Run the tests, expect 7 PASS.
-- [ ] **Step 5:** `git add server/src/snapshot.ts server/test/snapshot.test.ts`, then `git commit -m "feat: snapshot hashing and baseline diff"`.
+- [ ] **Step 4:** Run, expect 7 PASS.
+- [ ] **Step 5:** Commit: `feat: uuid-keyed snapshot diff`.
 
-**Acceptance:** the sketch-edit test shows that a modified pre-existing object is detected. Volatile classes are excluded only from `removed` and `modified`, never from `added`.
+**Acceptance:** a key with a new handle compares equal (reopen). A structural change and a removal are both reported.
+
 
 ### Task 7: Run store (events, atomic writes, interrupted detection)
 
@@ -755,7 +912,7 @@ export class ConsoleLog {
 export const FEATURE_TYPES = ['sketch_rectangle', 'extrude'] as const;   // grows only via promotion gate
 export type FeatureType = (typeof FEATURE_TYPES)[number];
 export const CHECK_KINDS = ['feature_exists', 'depends_on', 'status_ok', 'body_count', 'dimension',
-  'no_unexpected_modification', 'no_new_console_errors', 'reopen_matches'] as const;
+  'no_unexpected_modification', 'existing_features_intact', 'no_new_console_errors', 'reopen_matches'] as const;
 export type CheckKind = (typeof CHECK_KINDS)[number];
 export type Check = { kind: CheckKind; expect?: any };
 export type PlanFeature = { id: string; type: FeatureType; dependsOn: string[]; params: Record<string, number | string>; checks: Check[] };
@@ -765,25 +922,26 @@ export function validatePlan(raw: unknown): PlanResult;
 
 // checks.ts
 export type Evidence = {
-  idRegex: string; classPath: string; featureClass: Record<FeatureType, string>; bodyClass: string | null;
-  volatileClasses: string[]; stripPaths: string[]; supported: Record<CheckKind, boolean>;
+  excludeClasses: string[]; featureClass: Record<FeatureType, string>; bodyClass: string | null;
+  volatileClasses: string[]; supported: Record<CheckKind, boolean>;
 };
 export type CheckStatus = 'pass' | 'fail' | 'unsupported' | 'skipped';
 export type CheckResult = { kind: CheckKind; status: CheckStatus; detail: string };
 export type FeatureCtx = {
   feature: PlanFeature; diff: SnapDiff; cur: ModelSnapshot; ev: Evidence;
   freshConsole: string[];                 // texts of fresh console errors in this feature window
-  createdIds: Record<string, number>;     // earlier plan feature id -> its object id
+  createdIds: Record<string, string>;     // earlier plan feature id -> its object key (uuid)
 };
-export const MANDATORY: CheckKind[] = ['feature_exists', 'no_unexpected_modification', 'no_new_console_errors'];
-export function evaluateFeature(ctx: FeatureCtx): { results: CheckResult[]; passed: boolean; createdId?: number };
+export const MANDATORY: CheckKind[] = ['feature_exists', 'existing_features_intact', 'no_new_console_errors'];
+export function evaluateFeature(ctx: FeatureCtx): { results: CheckResult[]; passed: boolean; createdId?: string };
 export function evaluateAcceptance(checks: Check[], cur: ModelSnapshot, ev: Evidence): CheckResult[];
+export function reopenMatches(before: ModelSnapshot, after: ModelSnapshot, ev: Evidence): CheckResult;
 ```
 (Task 5's `Evidence` comes from `checks.ts`, so `adapter.ts` imports it from there.)
 
 Rules:
 - `validatePlan` checks: schema; unique ids; `dependsOn` refers only to earlier ids; every `extrude` depends on a `sketch_rectangle`; `sketch_rectangle.params` = `{plane: 'XY'|'XZ'|'YZ', width>0, height>0}`; `extrude.params` = `{depth>0}`. An unknown `type` gives the error `operation "<type>" not supported in this version` and `unsupported: true`.
-- `evaluateFeature` runs `MANDATORY` plus `feature.checks` (deduped by kind). If `ev.supported[kind]` is false, the result is `unsupported`. `reopen_matches` is always `skipped` here (the orchestrator handles it).
+- `evaluateFeature` runs `MANDATORY` plus `feature.checks` (deduped by kind). If `ev.supported[kind]` is false, the result is `unsupported`. `reopen_matches` is always `skipped` here: the orchestrator evaluates it with `reopenMatches(before, after, ev)` (same keys and fingerprints after reopen, Q9). `existing_features_intact` = no baseline feature removed or structurally changed. It never implies parameters are unchanged (Q6), so it never enables recovery.
 - **`passed` is true only if no result is `fail` AND `feature_exists` is `pass`.** If creation can't be proven, the feature can't pass.
 
 - [ ] **Step 1: Failing test `server/test/plan.test.ts`**
@@ -830,28 +988,28 @@ describe('validatePlan', () => {
 - [ ] **Step 2: Failing test `server/test/checks.test.ts`**
 ```ts
 import { describe, it, expect } from 'vitest';
-import { evaluateFeature, evaluateAcceptance, type Evidence } from '../src/checks';
+import { evaluateFeature, evaluateAcceptance, reopenMatches, type Evidence } from '../src/checks';
 import type { ModelSnapshot, SnapObject } from '../src/snapshot';
 
 const allSupported = { feature_exists: true, depends_on: true, status_ok: true, body_count: true, dimension: true,
-  no_unexpected_modification: true, no_new_console_errors: true, reopen_matches: true };
+  no_unexpected_modification: true, existing_features_intact: true, no_new_console_errors: true, reopen_matches: true };
 const ev = (over: Partial<typeof allSupported> = {}): Evidence => ({
-  idRegex: '', classPath: '', featureClass: { sketch_rectangle: 'Sketch', extrude: 'Extrude' }, bodyClass: 'Body',
-  volatileClasses: [], stripPaths: [], supported: { ...allSupported, ...over },
+  excludeClasses: [], featureClass: { sketch_rectangle: 'Sketch', extrude: 'Extrude' }, bodyClass: 'Body',
+  volatileClasses: [], supported: { ...allSupported, ...over },
 });
-const snap = (...o: SnapObject[]): ModelSnapshot => ({ objects: new Map(o.map((x) => [x.id, x])) });
-const extrude: SnapObject = { id: 7, cls: 'Extrude', hash: 'h', deps: [5], statusOk: true, dims: { depth: 8 } };
+const snap = (...o: SnapObject[]): ModelSnapshot => ({ objects: new Map(o.map((x) => [x.key, x])) });
+const extrude: SnapObject = { key: 'u7', handle: 7, cls: 'Extrude', hash: 'h', deps: ['u5'], statusOk: true, dims: { depth: 8 } };
 const feature = { id: 'f2', type: 'extrude' as const, dependsOn: ['f1'], params: { depth: 8 },
   checks: [{ kind: 'depends_on' as const }, { kind: 'status_ok' as const }, { kind: 'dimension' as const, expect: { name: 'depth', value: 8 } }] };
 const ctx = (o: Partial<Parameters<typeof evaluateFeature>[0]> = {}) => ({
   feature, diff: { added: [extrude], removed: [], modified: [] }, cur: snap(extrude), ev: ev(),
-  freshConsole: [], createdIds: { f1: 5 }, ...o,
+  freshConsole: [], createdIds: { f1: 'u5' }, ...o,
 });
 
 describe('evaluateFeature', () => {
   it('passes when all evidence matches', () => {
     const r = evaluateFeature(ctx());
-    expect(r.passed).toBe(true); expect(r.createdId).toBe(7);
+    expect(r.passed).toBe(true); expect(r.createdId).toBe('u7');
   });
   it('agent claims done but nothing was created -> fail', () => {
     const r = evaluateFeature(ctx({ diff: { added: [], removed: [], modified: [] } }));
@@ -863,7 +1021,7 @@ describe('evaluateFeature', () => {
     expect(r.passed).toBe(false);
   });
   it('modified pre-existing object -> fail', () => {
-    const r = evaluateFeature(ctx({ diff: { added: [extrude], removed: [], modified: [{ id: 5, cls: 'Sketch', hash: 'x' }] } }));
+    const r = evaluateFeature(ctx({ diff: { added: [extrude], removed: [], modified: [{ key: 'u5', handle: 5, cls: 'Sketch', hash: 'x' }] } }));
     expect(r.passed).toBe(false);
   });
   it('fresh console error -> fail', () => {
@@ -886,10 +1044,24 @@ describe('evaluateFeature', () => {
 
 describe('evaluateAcceptance', () => {
   it('body_count pass/fail/unsupported', () => {
-    const cur = snap({ id: 1, cls: 'Body', hash: 'b' });
+    const cur = snap({ key: 'u1', handle: 1, cls: 'Body', hash: 'b' });
     expect(evaluateAcceptance([{ kind: 'body_count', expect: 1 }], cur, ev())[0].status).toBe('pass');
     expect(evaluateAcceptance([{ kind: 'body_count', expect: 2 }], cur, ev())[0].status).toBe('fail');
     expect(evaluateAcceptance([{ kind: 'body_count', expect: 1 }], cur, ev({ body_count: false }))[0].status).toBe('unsupported');
+  });
+});
+
+describe('reopenMatches', () => {
+  const a = snap({ key: 'u1', handle: 1, cls: 'Sketch', hash: 's' }, { key: 'u2', handle: 2, cls: 'Extrude', hash: 'e' });
+  it('passes when the same keys and fingerprints come back under new handles', () => {
+    const b = snap({ key: 'u1', handle: 901, cls: 'Sketch', hash: 's' }, { key: 'u2', handle: 902, cls: 'Extrude', hash: 'e' });
+    expect(reopenMatches(a, b, ev()).status).toBe('pass');
+  });
+  it('fails when a feature is missing after reopen', () => {
+    expect(reopenMatches(a, snap({ key: 'u1', handle: 1, cls: 'Sketch', hash: 's' }), ev()).status).toBe('fail');
+  });
+  it('unsupported when evidence says so', () => {
+    expect(reopenMatches(a, a, ev({ reopen_matches: false })).status).toBe('unsupported');
   });
 });
 ```
@@ -901,7 +1073,7 @@ import { z } from 'zod';
 export const FEATURE_TYPES = ['sketch_rectangle', 'extrude'] as const;
 export type FeatureType = (typeof FEATURE_TYPES)[number];
 export const CHECK_KINDS = ['feature_exists', 'depends_on', 'status_ok', 'body_count', 'dimension',
-  'no_unexpected_modification', 'no_new_console_errors', 'reopen_matches'] as const;
+  'no_unexpected_modification', 'existing_features_intact', 'no_new_console_errors', 'reopen_matches'] as const;
 export type CheckKind = (typeof CHECK_KINDS)[number];
 export type Check = { kind: CheckKind; expect?: any };
 export type PlanFeature = { id: string; type: FeatureType; dependsOn: string[]; params: Record<string, number | string>; checks: Check[] };
@@ -955,19 +1127,19 @@ export function validatePlan(raw: unknown): PlanResult {
 - [ ] **Step 5: Implement `server/src/checks.ts`**
 ```ts
 import type { Check, CheckKind, FeatureType, PlanFeature } from './plan';
-import type { ModelSnapshot, SnapDiff, SnapObject } from './snapshot';
+import { diffSnapshots, type ModelSnapshot, type SnapDiff, type SnapObject } from './snapshot';
 
 export type Evidence = {
-  idRegex: string; classPath: string; featureClass: Record<FeatureType, string>; bodyClass: string | null;
-  volatileClasses: string[]; stripPaths: string[]; supported: Record<CheckKind, boolean>;
+  excludeClasses: string[]; featureClass: Record<FeatureType, string>; bodyClass: string | null;
+  volatileClasses: string[]; supported: Record<CheckKind, boolean>;
 };
 export type CheckStatus = 'pass' | 'fail' | 'unsupported' | 'skipped';
 export type CheckResult = { kind: CheckKind; status: CheckStatus; detail: string };
 export type FeatureCtx = {
   feature: PlanFeature; diff: SnapDiff; cur: ModelSnapshot; ev: Evidence;
-  freshConsole: string[]; createdIds: Record<string, number>;
+  freshConsole: string[]; createdIds: Record<string, string>;
 };
-export const MANDATORY: CheckKind[] = ['feature_exists', 'no_unexpected_modification', 'no_new_console_errors'];
+export const MANDATORY: CheckKind[] = ['feature_exists', 'existing_features_intact', 'no_new_console_errors'];
 
 const r = (kind: CheckKind, status: CheckStatus, detail: string): CheckResult => ({ kind, status, detail });
 
@@ -988,10 +1160,10 @@ export function evaluateFeature(ctx: FeatureCtx): { results: CheckResult[]; pass
     if (!ev.supported[c.kind]) return r(c.kind, 'unsupported', 'not exposed by inspector (Task 0 evidence)');
     switch (c.kind) {
       case 'feature_exists':
-        return created ? r(c.kind, 'pass', `new ${cls} #${created.id}`) : r(c.kind, 'fail', `no new ${cls} object appeared`);
-      case 'no_unexpected_modification': {
+        return created ? r(c.kind, 'pass', `new ${cls} #${created.handle}`) : r(c.kind, 'fail', `no new ${cls} object appeared`);
+      case 'existing_features_intact': {
         const bad = [...diff.modified, ...diff.removed];
-        return bad.length ? r(c.kind, 'fail', `existing objects changed: ${bad.map((o) => `${o.cls}#${o.id}`).join(', ')}`) : r(c.kind, 'pass', 'none');
+        return bad.length ? r(c.kind, 'fail', `existing objects changed: ${bad.map((o) => `${o.cls} #${o.handle}`).join(', ')}`) : r(c.kind, 'pass', 'none');
       }
       case 'no_new_console_errors':
         return ctx.freshConsole.length ? r(c.kind, 'fail', ctx.freshConsole.join(' | ')) : r(c.kind, 'pass', 'none');
@@ -1010,7 +1182,7 @@ export function evaluateFeature(ctx: FeatureCtx): { results: CheckResult[]; pass
     }
   });
   const exists = results.find((x) => x.kind === 'feature_exists')!;
-  return { results, passed: exists.status === 'pass' && !results.some((x) => x.status === 'fail'), createdId: created?.id };
+  return { results, passed: exists.status === 'pass' && !results.some((x) => x.status === 'fail'), createdId: created?.key };
 }
 
 export function evaluateAcceptance(checks: Check[], cur: ModelSnapshot, ev: Evidence): CheckResult[] {
@@ -1024,8 +1196,16 @@ export function evaluateAcceptance(checks: Check[], cur: ModelSnapshot, ev: Evid
     return r(c.kind, 'skipped', 'not a model-level check');
   });
 }
+
+export function reopenMatches(before: ModelSnapshot, after: ModelSnapshot, ev: Evidence): CheckResult {
+  if (!ev.supported.reopen_matches) return r('reopen_matches', 'unsupported', 'not exposed by inspector (Task 0 evidence)');
+  const d = diffSnapshots(before, after, ev.volatileClasses);
+  return d.added.length || d.removed.length || d.modified.length
+    ? r('reopen_matches', 'fail', `after reopen: +${d.added.length} -${d.removed.length} ~${d.modified.length} features`)
+    : r('reopen_matches', 'pass', `${after.objects.size} features persisted`);
+}
 ```
-- [ ] **Step 6:** Run, expect PASS (6 plan + 9 checks).
+- [ ] **Step 6:** Run, expect PASS (6 plan + 12 checks).
 - [ ] **Step 7:** Commit: `feat: plan validation and evidence-based checks`.
 
 **Acceptance:** a test proves that `unsupported` never makes a feature pass on its own, and that a feature can't pass without `feature_exists` = `pass`.
@@ -1234,6 +1414,9 @@ Install the browser once: `cd server && pnpm exec playwright install chromium`.
 
 ### Task 12: Executor (per-feature agent) + tool gate + playbook
 
+> **REVISION REQUIRED before execution (Task 0 evidence, 2026-10-12):** Ivy autosaves and has no manual save. Replace the `save` mode/step with a `reopen` step (close + reopen the document, then `reopenMatches(before, after, ev)` from Task 9). Object keys are uuid strings (`SnapObject.key`/`handle`, `createdIds: Record<string,string>`). With `supported.no_unexpected_modification = false` recovery always stops with `restart required`; add a test for that path. Opus revises this task after Tasks 5–10 land.
+
+
 **Files:** Create `server/src/executor.ts`, `server/playbook/{common,new_document,sketch_rectangle,extrude,save,recovery}.md`. Test: `server/test/executor.test.ts`.
 
 The agent does **not** get the inspector MCP. The harness does all verification. This is a deliberate narrowing of spec §8.
@@ -1420,6 +1603,9 @@ export const runAgent: RunAgent = async (task, cdpEndpoint, signal, onEvent) => 
 # Milestone 4: Orchestration, reporting, UI, launchers (Tasks 13–18)
 
 ### Task 13: Orchestrator (state machine, safe recovery, pause/cancel/retry)
+
+> **REVISION REQUIRED before execution (Task 0 evidence, 2026-10-12):** Ivy autosaves and has no manual save. Replace the `save` mode/step with a `reopen` step (close + reopen the document, then `reopenMatches(before, after, ev)` from Task 9). Object keys are uuid strings (`SnapObject.key`/`handle`, `createdIds: Record<string,string>`). With `supported.no_unexpected_modification = false` recovery always stops with `restart required`; add a test for that path. Opus revises this task after Tasks 5–10 land.
+
 
 **Files:** Create `server/src/orchestrator.ts`. Test: `server/test/orchestrator.test.ts`.
 
@@ -1832,6 +2018,9 @@ export class Orchestrator {
 **Acceptance (Task 13):** all 12 tests pass. A cancelled run is never `passed`. Recovery never runs when existing objects changed. A failure to verify restoration stops the run with "restart required".
 
 ### Task 14: Report + bug log (rebuildable from events)
+
+> **REVISION REQUIRED before execution (Task 0 evidence, 2026-10-12):** Ivy autosaves and has no manual save. Replace the `save` mode/step with a `reopen` step (close + reopen the document, then `reopenMatches(before, after, ev)` from Task 9). Object keys are uuid strings (`SnapObject.key`/`handle`, `createdIds: Record<string,string>`). With `supported.no_unexpected_modification = false` recovery always stops with `restart required`; add a test for that path. Opus revises this task after Tasks 5–10 land.
+
 
 **Files:** Create `server/src/report.ts`. Test: `server/test/report.test.ts`.
 
@@ -2305,6 +2494,9 @@ api('GET', '/api/status').then(({ body }) => body ? select(body.runId) : loadHis
 **Acceptance:** start / 409 / history / verdict banner / artifact links work; buttons are enabled exactly per the rules above.
 
 ### Task 17: Windows launchers
+
+> **REVISION REQUIRED before execution (Task 0 evidence, 2026-10-12):** Ivy autosaves and has no manual save. Replace the `save` mode/step with a `reopen` step (close + reopen the document, then `reopenMatches(before, after, ev)` from Task 9). Object keys are uuid strings (`SnapObject.key`/`handle`, `createdIds: Record<string,string>`). With `supported.no_unexpected_modification = false` recovery always stops with `restart required`; add a test for that path. Opus revises this task after Tasks 5–10 land.
+
 
 **Files:** Create `setup.bat`, `start-all.bat`, `start-harness.bat`, `login.bat`, `stop-all.bat`, `accept.bat` (root), `server/scripts/accept.ts`.
 
