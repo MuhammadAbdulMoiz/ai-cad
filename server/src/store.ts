@@ -11,11 +11,19 @@ export class RunStore {
   static create(runsDir: string, prompt: string): RunStore {
     const d = new Date();
     const p = (n: number, w = 2) => String(n).padStart(w, '0');
-    const id = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}-${p(d.getMilliseconds(), 3)}`;
-    const s = new RunStore(id, path.join(runsDir, id));
-    fs.mkdirSync(s.dir, { recursive: true });
-    s.append('run_start', { prompt });
-    return s;
+    const base = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}-${p(d.getMilliseconds(), 3)}`;
+    fs.mkdirSync(runsDir, { recursive: true });
+    for (let n = 1; ; n++) {
+      const id = n === 1 ? base : `${base}-${n}`;
+      const dir = path.join(runsDir, id);
+      try { fs.mkdirSync(dir); } catch (e) {
+        if ((e as NodeJS.ErrnoException).code === 'EEXIST') continue;  // same ms: take the next suffix
+        throw e;
+      }
+      const s = new RunStore(id, dir);
+      s.append('run_start', { prompt });
+      return s;
+    }
   }
   static open(runsDir: string, id: string): RunStore {
     if (!ID.test(id)) throw new Error(`bad run id: ${id}`);
@@ -37,7 +45,12 @@ export class RunStore {
   readEvents(): RunEvent[] {
     const f = path.join(this.dir, 'events.jsonl');
     if (!fs.existsSync(f)) return [];
-    return fs.readFileSync(f, 'utf8').split('\n').flatMap((l) => { try { return l ? [JSON.parse(l)] : []; } catch { return []; } });
+    return fs.readFileSync(f, 'utf8').split('\n').flatMap((l) => {
+      try {
+        const v = l ? JSON.parse(l) : null;
+        return v && typeof v === 'object' && typeof v.type === 'string' ? [v as RunEvent] : [];
+      } catch { return []; }
+    });
   }
   shotPath(name: string): string {
     const d = path.join(this.dir, 'shots');
