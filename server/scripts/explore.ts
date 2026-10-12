@@ -97,6 +97,7 @@ async function main() {
     await page.evaluate(() => {
       localStorage.setItem('use_local_server', 'true'); // dev flag: talk to local zcad_service
       localStorage.setItem('userLanguage', JSON.stringify('en-US')); // deterministic UI language = en-US i18n strings
+      localStorage.setItem('open_language', 'true'); // required alongside userLanguage for English (per human)
     });
     await page.reload({ waitUntil: 'domcontentloaded' });
     const home = await page.getByText('New 3D Design').first().waitFor({ timeout: 30000 }).then(() => true, () => false);
