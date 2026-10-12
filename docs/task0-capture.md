@@ -9,7 +9,7 @@ Rules for every capture:
 - Check the printed project id. It must be the same document every time (and must be the reopened one in step 9). If several projects are open, use `pnpm probe <label> --project <id>`.
 - If the probe prints errors, a WARNING, or 0 objects, fix the situation and re-run the same label (re-running replaces that capture).
 
-| # Do this in Ivy first | Then run |
+| # | Do this in Ivy first | Then run |
 |---|---|---|
 | 1 | Nothing (empty part open) | `pnpm probe 00-empty-part` |
 | 2 | Sketch on XY plane: one rectangle 100 × 60 mm, exit sketch | `pnpm probe 01-after-sketch` |

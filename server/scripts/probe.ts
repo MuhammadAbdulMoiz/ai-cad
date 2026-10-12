@@ -38,7 +38,12 @@ if (projText !== undefined) {
 }
 if (!projects?.length) { finish(null, null, 0); console.error('No active Ivy project. Open a part in the browser first.', errors); process.exit(1); }
 const chosen = projArg >= 0 ? projects.find((p: any) => p.projectId === Number(rest[projArg + 1])) : projects.at(-1);
-if (!chosen) { console.error('Project not found. Active:', projects); process.exit(1); }
+if (!chosen) {
+  errors['project'] = `project ${rest[projArg + 1]} not found; active: ${JSON.stringify(projects)}`;
+  finish(null, null, 0);
+  console.error('Project not found. Active:', projects);
+  process.exit(1);
+}
 const pa = { projectId: chosen.projectId, projectTag: chosen.projectTag };
 
 const dot = (await tryCall('graph-full.dot', 'zcad_get_object_graph', { ...pa, rootEntityId: 0, compactMode: false })) ?? '';
