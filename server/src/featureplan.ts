@@ -10,21 +10,23 @@ export const AXES = ['X', 'Y', 'Z'] as const;
 /** Known CAD operations whose generic-feature request path is not verified yet. */
 export const UNVERIFIED_OPERATIONS = ['fillet', 'chamfer', 'hole', 'pattern', 'mirror', 'shell', 'draft', 'sweep', 'loft'];
 
+const SHAPES = ['circle', 'polygon', 'rectangle', 'polyline'];
+const END_TYPES = ['blind', 'throughAll'];
 const Value = z.union([z.number(), z.string().min(1)]); // literal or expression over parameters/derived
 const Profile = z.discriminatedUnion('shape', [
-  z.object({ shape: z.literal('circle'), cx: Value.optional(), cy: Value.optional(), d: Value.optional(), r: Value.optional() }),
-  z.object({ shape: z.literal('polygon'), sides: z.number().int(), size: Value, fit: z.enum(['acrossFlats', 'acrossCorners']).optional(),
+  z.strictObject({ shape: z.literal('circle'), cx: Value.optional(), cy: Value.optional(), d: Value.optional(), r: Value.optional() }),
+  z.strictObject({ shape: z.literal('polygon'), sides: z.number().int(), size: Value, fit: z.enum(['acrossFlats', 'acrossCorners']).optional(),
     cx: Value.optional(), cy: Value.optional(), rotation: Value.optional() }),
-  z.object({ shape: z.literal('rectangle'), width: Value, height: Value, cx: Value.optional(), cy: Value.optional(), rotation: Value.optional() }),
-  z.object({ shape: z.literal('polyline'), points: z.array(z.tuple([Value, Value])), rotation: Value.optional() }),
+  z.strictObject({ shape: z.literal('rectangle'), width: Value, height: Value, cx: Value.optional(), cy: Value.optional(), rotation: Value.optional() }),
+  z.strictObject({ shape: z.literal('polyline'), points: z.array(z.tuple([Value, Value])), cx: Value.optional(), cy: Value.optional(), rotation: Value.optional() }),
 ]);
 const Op = z.enum(['add', 'cut']);
 const Feature = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('sketch'), id: z.string().min(1), plane: z.enum(PLANES).default('XY'), profile: z.array(Profile).min(1) }),
-  z.object({ type: z.literal('extrude'), id: z.string().min(1), profile: z.string().min(1), depth: Value.optional(),
+  z.strictObject({ type: z.literal('sketch'), id: z.string().min(1), plane: z.enum(PLANES).default('XY'), profile: z.array(Profile).min(1) }),
+  z.strictObject({ type: z.literal('extrude'), id: z.string().min(1), profile: z.string().min(1), depth: Value,
     endType: z.enum(['blind', 'throughAll']).default('blind'), operation: Op.default('add'),
     reversed: z.boolean().optional(), symmetric: z.boolean().optional(), solid: z.string().optional() }),
-  z.object({ type: z.literal('revolve'), id: z.string().min(1), profile: z.string().min(1), axis: z.enum(AXES).default('Z'),
+  z.strictObject({ type: z.literal('revolve'), id: z.string().min(1), profile: z.string().min(1), axis: z.enum(AXES).default('Z'),
     operation: Op.default('add'), solid: z.string().optional() }),
 ]);
 const Name = z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/);
@@ -47,18 +49,21 @@ export type FeaturePlanResult =
 // ---------------------------------------------------------------- expressions (mirror of toolbox_expression.cpp)
 const FUNCS: Record<string, (v: number) => number> = {
   sin: Math.sin, cos: Math.cos, tan: Math.tan, asin: Math.asin, acos: Math.acos, atan: Math.atan, sqrt: Math.sqrt,
-  abs: Math.abs, floor: Math.floor, ceil: Math.ceil, round: Math.round,
+  abs: Math.abs, floor: Math.floor, ceil: Math.ceil, round: (v) => Math.sign(v) * Math.round(Math.abs(v)), // std::round: half away from zero
   deg: (v) => (v * 180) / Math.PI, rad: (v) => (v * Math.PI) / 180,
 };
 const CONSTS: Record<string, number> = { pi: Math.PI, e: Math.E };
 
 /** Evaluates `expr` over `dims`. Precedence as the backend: unary (tightest, right) > ^ (right) > * / > + -. */
 export function evaluate(expr: string, dims: Record<string, number>): number {
-  const tokens = expr.match(/\d*\.?\d+(?:[eE][+-]?\d+)?|[A-Za-z_][A-Za-z0-9_]*|[-+*/^(),]|\S/g) ?? [];
+  // only ' ' and '\t' are whitespace in the backend tokenizer; any other character is an error
+  const tokens = (expr.match(/\d*\.?\d+(?:[eE][+-]?\d+)?|[A-Za-z_][A-Za-z0-9_]*|[-+*/^(),]|[^]/g) ?? []).filter((t) => t !== ' ' && t !== '\t');
   let i = 0;
   const peek = () => tokens[i];
   const next = () => tokens[i++];
   const fail = (msg: string): never => { throw new Error(`${msg} in "${expr}"`); };
+  const bad = tokens.find((t) => !/^(\d*\.?\d|[A-Za-z_]|[-+*/^(),]$)/.test(t));
+  if (bad !== undefined) fail(`unexpected character '${bad}'`);
   const sum = (): number => {
     let v = product();
     while (peek() === '+' || peek() === '-') v = next() === '+' ? v + product() : v - product();
@@ -81,14 +86,14 @@ export function evaluate(expr: string, dims: Record<string, number>): number {
     if (/^\d*\.?\d/.test(t)) return Number(t);
     if (/^[A-Za-z_]/.test(t)) {
       if (peek() === '(') {
-        const fn = FUNCS[t] ?? fail(`unknown function "${t}"`);
+        const fn = (Object.hasOwn(FUNCS, t) ? FUNCS[t] : undefined) ?? fail(`unknown function "${t}"`);
         next();
         const v = sum();
         if (next() !== ')') fail('missing )');
         return fn(v);
       }
-      if (t in dims) return dims[t];
-      if (t in CONSTS) return CONSTS[t];
+      if (Object.hasOwn(dims, t)) return dims[t];
+      if (Object.hasOwn(CONSTS, t)) return CONSTS[t];
       return fail(`unknown name "${t}"`);
     }
     return fail(`unexpected character '${t}'`);
@@ -112,6 +117,10 @@ export function validateFeaturePlan(raw: unknown): FeaturePlanResult {
     } else if (typeof f?.type === 'string' && !['sketch', 'extrude', 'revolve'].includes(f.type)) {
       unsupported = true;
       errors.push(`operation "${f.type}" is unknown`);
+    } else if (f?.type === 'sketch' && Array.isArray(f.profile)) {
+      for (const p of f.profile) if (p?.shape !== undefined && !SHAPES.includes(p.shape)) { unsupported = true; errors.push(`profile shape "${String(p.shape)}" is not supported (supported: ${SHAPES.join(', ')})`); }
+    } else if (f?.type === 'extrude' && f.endType !== undefined && !END_TYPES.includes(f.endType)) {
+      unsupported = true; errors.push(`extrude endType "${String(f.endType)}" is not supported (supported: ${END_TYPES.join(', ')})`);
     }
   }
   if (!base.success) return { ok: false, unsupported, errors: [...errors, ...base.error.issues.map((x) => `${x.path.join('.')}: ${x.message}`)] };
@@ -121,19 +130,29 @@ export function validateFeaturePlan(raw: unknown): FeaturePlanResult {
   rawFeatures.forEach((f, idx) => {
     const r = Feature.safeParse(f);
     if (r.success) features.push(r.data);
-    else errors.push(...r.error.issues.map((x) => `features.${idx}.${x.path.join('.')}: ${x.message}`));
+    else for (const x of r.error.issues) {
+      if (x.code === 'unrecognized_keys') unsupported = true; // a field the validator does not model must never be dropped
+      errors.push(`features.${idx}.${x.path.join('.')}: ${x.message}`);
+    }
   });
-  if (errors.length) return { ok: false, unsupported: false, errors };
+  if (errors.length) return { ok: false, unsupported, errors };
   const plan = { ...base.data, features } as FeaturePlan;
 
   if (Object.keys(plan.parameters).length === 0) errors.push('at least one parameter is required (the backend asset reader rejects assets without parameters)');
   const dims: Record<string, number> = { ...plan.parameters };
-  for (const n of Object.keys(plan.derived)) if (n in dims) errors.push(`derived "${n}" duplicates a parameter`);
-  let pending = Object.entries(plan.derived);
+  const reserved = (n: string) => Object.hasOwn(CONSTS, n) || Object.hasOwn(FUNCS, n) || n === '__proto__';
+  for (const n of Object.keys(plan.parameters)) if (reserved(n)) errors.push(`parameter "${n}" is a reserved name (constant or function)`);
+  for (const n of Object.keys(plan.derived)) {
+    if (Object.hasOwn(dims, n)) errors.push(`derived "${n}" duplicates a parameter`);
+    if (reserved(n)) errors.push(`derived "${n}" is a reserved name (constant or function)`);
+  }
+  // Mirror toolbox_library.cpp: std::map (alphabetical) swept repeatedly; values resolved earlier in a sweep are visible to later entries.
+  let pending = Object.entries(plan.derived).sort(([x], [y]) => (x < y ? -1 : x > y ? 1 : 0));
   while (pending.length) {
     const still = pending.filter(([n, e]) => { try { dims[n] = evaluate(e, dims); return false; } catch { return true; } });
     if (still.length === pending.length) {
-      for (const [n, e] of still) { try { evaluate(e, dims); } catch (err) { errors.push(`derived "${n}": ${(err as Error).message}`); } }
+      const [n, e] = still[0]; // the backend reports only the first unresolved entry
+      try { evaluate(e, dims); } catch (err) { errors.push(`derived "${n}": ${(err as Error).message}`); }
       break;
     }
     pending = still;
@@ -149,14 +168,15 @@ export function validateFeaturePlan(raw: unknown): FeaturePlanResult {
   };
   const sketches = new Set<string>();
   const ids = new Set<string>();
-  let bodyExists = false;
+  const solids = new Set<string>(); // solids that have an add so far
   for (const f of plan.features) {
     if (ids.has(f.id)) errors.push(`duplicate feature id "${f.id}"`);
     ids.add(f.id);
     if (f.type === 'sketch') {
       f.profile.forEach((p, k) => {
         const at = `${f.id}.profile[${k}]`;
-        num(`${at}.cx`, p.shape !== 'polyline' ? p.cx : undefined); num(`${at}.cy`, p.shape !== 'polyline' ? p.cy : undefined);
+        num(`${at}.cx`, p.cx); num(`${at}.cy`, p.cy);
+        if (p.shape !== 'circle') num(`${at}.rotation`, p.rotation);
         if (p.shape === 'circle') {
           if (p.d === undefined && p.r === undefined) errors.push(`${at}: circle needs d or r`);
           num(`${at}.d`, p.d, true); num(`${at}.r`, p.r, true);
@@ -167,17 +187,26 @@ export function validateFeaturePlan(raw: unknown): FeaturePlanResult {
           num(`${at}.width`, p.width, true); num(`${at}.height`, p.height, true);
         } else {
           if (p.points.length < 3) errors.push(`${at}: polyline needs at least 3 points`);
-          p.points.forEach(([x, y], j) => { num(`${at}.points[${j}].x`, x); num(`${at}.points[${j}].y`, y); });
+          const xy = p.points.map(([x, y], j) => [num(`${at}.points[${j}].x`, x), num(`${at}.points[${j}].y`, y)]);
+          // rotation and translation preserve distance, so the raw evaluated values decide (backend: < 1e-6, incl. last -> first)
+          if (xy.every(([x, y]) => x !== undefined && y !== undefined)) {
+            for (let j = 0; j < xy.length; j++) {
+              const [a, b] = [xy[j], xy[(j + 1) % xy.length]];
+              if (Math.hypot(b[0]! - a[0]!, b[1]! - a[1]!) < 1e-6)
+                errors.push(`${at}: polyline corners ${j + 1} and ${((j + 1) % xy.length) + 1} coincide (closer than 1e-6); do not repeat the first point to close the loop, it closes automatically`);
+            }
+          }
         }
       });
       sketches.add(f.id);
     } else {
       if (!sketches.has(f.profile)) errors.push(`${f.id} references "${f.profile}", which is not an earlier sketch`);
       if (f.type === 'extrude') {
-        if (f.endType === 'blind') { if (f.depth === undefined) errors.push(`${f.id}: blind extrude needs depth`); else num(`${f.id}.depth`, f.depth, true); }
+        num(`${f.id}.depth`, f.depth, f.endType === 'blind'); // backend always evaluates depth; > 0 only when blind
       }
-      if (f.operation === 'cut' && !bodyExists) errors.push(`${f.id}: cut before any body exists`);
-      if (f.operation === 'add') bodyExists = true;
+      const solid = f.solid ?? '';
+      if (f.operation === 'cut' && !solids.has(solid)) errors.push(`${f.id}: cut before any add in solid "${solid}"`);
+      if (f.operation === 'add') solids.add(solid);
     }
   }
   return errors.length ? { ok: false, unsupported: false, errors } : { ok: true, plan, dims };

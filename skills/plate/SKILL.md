@@ -16,7 +16,7 @@
 - **Zero or negative dimension:** the validator rejects it before execution, and the backend rejects it too ("rectangle is W by H").
 - **Cut before any body:** the validator rejects it.
 - **Holes, fillets and chamfers** on the plate are not available yet: they're generic features whose request path is unverified. Plan them as separate, later features and mark them unsupported. Never approximate them silently.
-- **Placement:** the Toolbox builder may offset each build by a slot pitch (`placementIndex × 110 mm`). Until that's verified, don't rely on absolute coordinates.
+- **Placement:** the Toolbox builder offsets each build by (d, -d, 0) with d = placementIndex × slotPitch (toolbox_part_builder.cpp). 110 mm is only the default pitch (library.json may change it) and index 0 has no offset. This is from code, not yet verified live, so don't rely on absolute coordinates.
 
 ## Verification
 - **Feature history:** exactly one new `ivy::FeatSketch` and one `ivy::SolidExtrude`, and the extrude depends on the sketch.

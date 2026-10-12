@@ -4,7 +4,8 @@
   "featureGraph": {
     "added": [
       { "class": "ivy::FeatSketch", "count": 1 },
-      { "class": "ivy::SolidExtrude", "count": 1 }
+      { "class": "ivy::SolidExtrude", "count": 1 },
+      { "class": "ivy::FeatSolidSet", "count": 1, "note": "A Toolbox build always creates a new ivy::FeatSolidSet body (toolbox_part_builder.cpp:233-235), so the first measurement should expect it." }
     ],
     "dependsOn": [["ivy::SolidExtrude", "ivy::FeatSketch"]],
     "evidence": "docs/inspector-fields.md Q3, Q4 (UI-built plate); not yet observed for a Toolbox-built plate"

@@ -51,7 +51,7 @@ A successful tool response is never treated as a successful solid.
 
 `FeaturePlan = {part, label?, units: 'mm', maturity: 'concept', parameters{name: number}, derived{name: expression}, assumptions[], features[]}`.
 
-Feature types today are `sketch`, `extrude` and `revolve`, with their fields exactly as the backend asset reader accepts them. Expressions use the backend evaluator's grammar:
+Feature types today are `sketch`, `extrude` and `revolve`, as a stricter subset of what the backend asset reader accepts. Expressions use the backend evaluator's grammar:
 - operators `+ - * / ^`, with unary minus binding tighter than `^`;
 - one-argument functions `sin cos tan asin acos atan sqrt abs floor ceil round deg rad`;
 - constants `pi` and `e`;
