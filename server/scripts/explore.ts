@@ -41,12 +41,20 @@ async function scanToolbar(page: Page) {
         return { x: r.left + r.width / 2, y: r.top + r.height / 2, text: ((el as HTMLElement).innerText ?? el.textContent ?? '').trim(),
           title: el.getAttribute('title') ?? '', aria: el.getAttribute('aria-label') ?? '', cls: String(el.className).slice(0, 80) }; });
   }, vh - 140);
+  // A tooltip = short popup text that appears only while hovering this item.
+  const popups = () => page.evaluate(() => [...document.querySelectorAll('[role="tooltip"], .el-popper, [class*="tooltip"]')]
+    .filter((e) => (e as HTMLElement).offsetParent !== null)
+    .map((e) => ((e as HTMLElement).innerText ?? e.textContent ?? '').trim()).filter((t) => t && t.length < 80));
   const result = [];
-  for (const it of items) {
+  // Deduplicate by position: nested wrappers of one button share a centre.
+  const uniq = [...new Map(items.map((it) => [`${Math.round(it.x)},${Math.round(it.y)}`, it])).values()];
+  for (const it of uniq) {
+    await page.mouse.move(5, 5);
+    await page.waitForTimeout(150);
+    const before = new Set(await popups());
     await page.mouse.move(it.x, it.y);
-    await page.waitForTimeout(350);
-    const tip = await page.evaluate(() => [...document.querySelectorAll('[role="tooltip"], .el-popper, [class*="tooltip"]')]
-      .filter((e) => (e as HTMLElement).offsetParent !== null).map((e) => ((e as HTMLElement).innerText ?? e.textContent ?? '').trim()).filter(Boolean).join(' | '));
+    await page.waitForTimeout(450);
+    const tip = (await popups()).filter((t) => !before.has(t)).join(' | ');
     result.push({ ...it, tooltip: tip });
   }
   return result;
@@ -127,7 +135,7 @@ async function main() {
     await page.waitForTimeout(1500);
     note('panel:new-sketch', { panels: await dumpPanels(page) });
     await shot(page, 'sketch-panel');
-    await page.getByRole('button', { name: /^Confirm$/ }).first().click({ timeout: 10000 });
+    await page.getByText('Confirm', { exact: true }).last().click({ timeout: 10000 }) /* not an a11y button (observed) */;
     await page.getByText('Exit Sketch').first().waitFor({ timeout: 20000 });
     note('toolbar:sketch', { items: await scanToolbar(page) });
     await shot(page, 'sketch-mode');
@@ -187,7 +195,7 @@ async function main() {
     await page.keyboard.press('Enter');
     await page.waitForTimeout(800);
     await shot(page, 'extrude-depth');
-    await page.getByRole('button', { name: /^Confirm$/ }).first().click({ timeout: 10000 });
+    await page.getByText('Confirm', { exact: true }).last().click({ timeout: 10000 }) /* not an a11y button (observed) */;
     await page.waitForTimeout(3000);
     await snap('s2-extrude');
     const d12 = diffSnapshots(snaps['s1-sketch'], snaps['s2-extrude'], ev.volatileClasses);
