@@ -1,5 +1,7 @@
 # Ivy CAD AI Harness Implementation Plan
 
+> **Status (2026-10-12):** Tasks 1–11 done. Tasks 12–18 (UI executor, playbook, UI-driven orchestration) are **superseded** by `docs/specs/2026-10-12-ai-native-cad-engineering.md`; a new plan for native-MCP milestones follows once the zcad_service build/query interface is reviewed.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Implementer model: `claude-haiku-5-5`. Tasks marked **[GATE]** are stops for the human, not for an agent.
 
 **Goal:** Local harness that turns a product prompt into a validated CAD plan and builds it in Ivy's web UI, feature by feature, with independent, evidence-based verification.

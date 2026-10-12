@@ -1,5 +1,7 @@
 # Ivy CAD AI Harness — Design Spec
 
+> **Superseded (2026-10-12)** by `2026-10-12-ai-native-cad-engineering.md`: construction moves from UI automation to native MCP operations. Evidence, verification and run-control rules here still apply (see that spec §8).
+
 Date: 2026-10-12
 Status: Draft for review
 

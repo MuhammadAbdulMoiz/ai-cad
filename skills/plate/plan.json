@@ -1,0 +1,17 @@
+{
+  "part": "mounting-plate",
+  "label": "Rectangular mounting plate",
+  "units": "mm",
+  "maturity": "concept",
+  "parameters": { "width": 100, "height": 60, "thickness": 8 },
+  "assumptions": ["Plate centred on the origin in XY, extruded +Z", "No holes or edge treatment in this pattern"],
+  "features": [
+    {
+      "type": "sketch",
+      "id": "s_plate",
+      "plane": "XY",
+      "profile": [{ "shape": "rectangle", "width": "width", "height": "height" }]
+    },
+    { "type": "extrude", "id": "e_plate", "profile": "s_plate", "depth": "thickness" }
+  ]
+}

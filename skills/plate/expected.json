@@ -1,0 +1,19 @@
+{
+  "status": "unmeasured",
+  "note": "Values below are analytic hypotheses, NOT test evidence. Replace with measured outputs (zcad_measure_part + inspector) from the first verified live build, record the run id, and set status to \"measured\".",
+  "featureGraph": {
+    "added": [
+      { "class": "ivy::FeatSketch", "count": 1 },
+      { "class": "ivy::SolidExtrude", "count": 1 }
+    ],
+    "dependsOn": [["ivy::SolidExtrude", "ivy::FeatSketch"]],
+    "evidence": "docs/inspector-fields.md Q3, Q4 (UI-built plate); not yet observed for a Toolbox-built plate"
+  },
+  "hypothesis": {
+    "volume_mm3": 48000,
+    "bbox_mm": [100, 60, 8],
+    "basis": "width * height * thickness; centring and +Z direction assumed, not verified (protocol-spike.md §6 item 3: slot placement)"
+  },
+  "measured": null,
+  "measuredRunId": null
+}
