@@ -3,10 +3,10 @@ export type ConsoleMark = { seq: number; seen: Set<string> };
 
 export function signature(text: string): string {
   return text.toLowerCase()
-    .replace(/\?\S*/g, '')
+    .replace(/(https?:\/\/[^\s?#]*)[?#]\S*/g, '$1')
     .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g, '#')
     .replace(/0x[0-9a-f]+/g, '#')
-    .replace(/\d+/g, '#')
+    .replace(/\b\d+\b/g, '#')
     .replace(/\s+/g, ' ').trim();
 }
 
