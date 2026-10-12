@@ -100,13 +100,14 @@ async function main() {
       localStorage.setItem('open_language', 'true'); // required alongside userLanguage for English (per human)
     });
     await page.reload({ waitUntil: 'domcontentloaded' });
-    const home = await page.getByText('New 3D Design').first().waitFor({ timeout: 30000 }).then(() => true, () => false);
+    const createBtn = page.getByText(/^(Create 3D Project|New 3D Design)$/).first();
+    const home = !page.url().includes('/p/login') && (await createBtn.waitFor({ timeout: 30000 }).then(() => true, () => false));
     await shot(page, 'home');
-    if (!home) { note('login', { ok: false, hint: 'Not logged in (no "New 3D Design"). Run login.bat first.', url: page.url() }); return; }
+    if (!home) { note('login', { ok: false, hint: 'Not logged in, or home page changed (no "Create 3D Project"). Run login.bat first.', url: page.url() }); return; }
 
     // 2. Create a disposable part; identify its project explicitly
     const before = await projectIds();
-    await clickText(page, 'New 3D Design');
+    await createBtn.click();
     await page.waitForURL(/\/a\/mda\/zcad\?.*projectId=\d+/, { timeout: 30000 });
     const url = new URL(page.url());
     const projectId = Number(url.searchParams.get('projectId'));
