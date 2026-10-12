@@ -14,6 +14,7 @@ export const config = {
   inspectorUrl: env('INSPECTOR_URL', 'http://127.0.0.1:8083/mcp'),
   port: Number(env('HARNESS_PORT', '4377')),
   cdpPort: Number(env('CDP_PORT', '9222')),
+  browserChannel: process.env.BROWSER_CHANNEL ?? 'chrome', // '' = bundled chromium
   model: env('HARNESS_MODEL', 'claude-sonnet-5-5'),
   maxTurnsPerFeature: Number(env('MAX_TURNS_PER_FEATURE', '25')),
   maxRecoveries: 2,

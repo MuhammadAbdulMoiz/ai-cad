@@ -18,6 +18,7 @@ export class HarnessBrowser {
     let ctx: BrowserContext;
     try {
       ctx = await chromium.launchPersistentContext(config.profileDir, {
+        channel: config.browserChannel || undefined,
         headless: false, ignoreHTTPSErrors: true, viewport: { width: 1600, height: 900 },
         args: [`--remote-debugging-port=${config.cdpPort}`],
       });
