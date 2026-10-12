@@ -132,7 +132,7 @@ export function validateFeaturePlan(raw: unknown): FeaturePlanResult {
     if (r.success) features.push(r.data);
     else for (const x of r.error.issues) {
       if (x.code === 'unrecognized_keys') unsupported = true; // a field the validator does not model must never be dropped
-      errors.push(`features.${idx}.${x.path.join('.')}: ${x.message}`);
+      errors.push(`features.${idx}${x.path.length ? '.' + x.path.join('.') : ''}: ${x.message}`);
     }
   });
   if (errors.length) return { ok: false, unsupported, errors };
@@ -140,12 +140,11 @@ export function validateFeaturePlan(raw: unknown): FeaturePlanResult {
 
   if (Object.keys(plan.parameters).length === 0) errors.push('at least one parameter is required (the backend asset reader rejects assets without parameters)');
   const dims: Record<string, number> = { ...plan.parameters };
-  const reserved = (n: string) => Object.hasOwn(CONSTS, n) || Object.hasOwn(FUNCS, n) || n === '__proto__';
-  for (const n of Object.keys(plan.parameters)) if (reserved(n)) errors.push(`parameter "${n}" is a reserved name (constant or function)`);
-  for (const n of Object.keys(plan.derived)) {
-    if (Object.hasOwn(dims, n)) errors.push(`derived "${n}" duplicates a parameter`);
-    if (reserved(n)) errors.push(`derived "${n}" is a reserved name (constant or function)`);
-  }
+  // dims resolve before constants/functions in both implementations, so shadowing pi/e/sin is backend-equivalent.
+  // Only __proto__ is unsafe, and zod's record parser silently drops it, so check the raw input.
+  for (const k of ['parameters', 'derived'] as const)
+    if (Object.hasOwn((raw as any)[k] ?? {}, '__proto__')) errors.push(`${k} name "__proto__" is a reserved name`);
+  for (const n of Object.keys(plan.derived)) if (Object.hasOwn(dims, n)) errors.push(`derived "${n}" duplicates a parameter`);
   // Mirror toolbox_library.cpp: std::map (alphabetical) swept repeatedly; values resolved earlier in a sweep are visible to later entries.
   let pending = Object.entries(plan.derived).sort(([x], [y]) => (x < y ? -1 : x > y ? 1 : 0));
   while (pending.length) {

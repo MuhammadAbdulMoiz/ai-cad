@@ -138,11 +138,32 @@ describe('validateFeaturePlan', () => {
     const ok: any = plate(); ok.features.push({ type: 'extrude', id: 'e2', profile: 's_plate', depth: 1, operation: 'cut' });
     expect(validateFeaturePlan(ok).ok).toBe(true);
   });
-  it('reserved names are rejected for parameters and derived', () => {
-    const a: any = plate(); a.parameters.pi = 3;
-    expect(fails(a)).toMatch(/parameter "pi" is a reserved/);
-    const b: any = { ...plate(), derived: { sin: 'width' } };
-    expect(fails(b)).toMatch(/derived "sin" is a reserved/);
+  it('a parameter or derived named __proto__ is rejected; pi/e/sin may be shadowed', () => {
+    const a = JSON.parse('{"part":"p","units":"mm","parameters":{"__proto__":3,"w":5},"features":[{"type":"sketch","id":"s","profile":[{"shape":"circle","d":"w"}]}]}');
+    expect(fails(a)).toMatch(/"__proto__" is a reserved name/);
+    const b = JSON.parse('{"part":"p","units":"mm","parameters":{"w":5},"derived":{"__proto__":"w"},"features":[{"type":"sketch","id":"s","profile":[{"shape":"circle","d":"w"}]}]}');
+    expect(fails(b)).toMatch(/"__proto__" is a reserved name/);
+    const c: any = plate(); c.parameters.pi = 3;
+    expect(validateFeaturePlan(c).ok).toBe(true);
+  });
+  it('the ISO 4014 hex bolt asset re-expressed as a plan validates', () => {
+    const bolt = {
+      part: 'iso4014-hex-bolt', units: 'mm',
+      parameters: { d: 8, s: 13, k: 5.3, L: 40 }, derived: { e: 's / cos(pi / 6)' },
+      features: [
+        { type: 'sketch', id: 's_head', plane: 'XY', profile: [{ shape: 'polygon', sides: 6, fit: 'acrossFlats', size: 's' }] },
+        { type: 'extrude', id: 'e_head', profile: 's_head', depth: 'k' },
+        { type: 'sketch', id: 's_shank', plane: 'XY', profile: [{ shape: 'circle', d: 'd' }] },
+        { type: 'extrude', id: 'e_shank', profile: 's_shank', depth: 'L', reversed: true, operation: 'add' },
+      ],
+    };
+    const r = validateFeaturePlan(bolt);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.dims.e).toBeCloseTo(13 / Math.cos(Math.PI / 6));
+  });
+  it('strict-key error path has no trailing dot', () => {
+    const a: any = plate(); a.features[1].foo = 1;
+    expect(fails(a)).toMatch(/features.1: Unrecognized key/);
   });
   it('derived values follow the backend order: alphabetical sweeps, in-sweep visibility', () => {
     // sweep 1: a_x ok(width); b_y needs c_z (pending); c_z ok -> sweep 2 resolves b_y
