@@ -149,7 +149,7 @@ async function main() {
     if (!canvas) throw new Error('no canvas found');
     const sk = [...sketchTools].sort((p, q) => p.x - q.x); // reuse: a re-scan is disturbed by menus the first scan opened
     // The rectangle button shows a variant menu instead of a tooltip (observed); it sits right after 'Line'.
-    const lineIdx = sk.findIndex((b) => /^Line/.test(b.tooltip));
+    const lineIdx = sk.findIndex((b) => /^Line/.test(b.tooltip));
     const rectBtn = sk.find((b) => /Rectangle/i.test(b.tooltip)) ?? (lineIdx >= 0 ? sk[lineIdx + 1] : undefined);
     note('rect:button', { rectBtn });
     if (!rectBtn) throw new Error('rectangle tool not found by tooltip');
