@@ -1,0 +1,87 @@
+digraph G {
+0 [label="ivy::Project", shape=box, style="rounded, filled", fillcolor="#337ECC" fontcolor=white, fontsize=24, width=2, height=1];
+  "42949673486" [label="ivy::PipelineContext 42949673486", style=filled, fillcolor="#FFA07A"];
+0 [label="ivy::Project", shape=box, style="rounded, filled", fillcolor="#337ECC" fontcolor=white, fontsize=24, width=2, height=1];
+subgraph cluster_569{ 
+label="零件"
+style=filled; fillcolor= "#E8F5E9"; color="#A5D6A7"; 
+  "569" [label="ivy::PartReference 569", style=filled, fillcolor="#ADD8E6"];
+  "528" [label="ivy::PartRepresentation 528", style=filled, fillcolor="#FFA07A"];
+  "527" [label="ivy::VisuContainer 527
+()", style=filled, fillcolor="#FFA07A"];
+  "571" [label="ivy::VisuGeomObject 571", style=filled, fillcolor="#FFA07A"];
+  "529" [label="ivy::ShapeContainer 529
+()", style=filled, fillcolor="#FFA07A"];
+  "530" [label="ivy::FeatContainer 530
+()", style=filled, fillcolor="#FFA07A"];
+  "533" [label="ivy::FeatPart 533
+1 零件", style=filled, fillcolor="#FFA07A"];
+  "538" [label="ivy::FeatOriginSet 538
+2 默认几何", style=filled, fillcolor="#FFA07A"];
+  "536" [label="ivy::FeatOriginPlane 536
+3 XY面", style=filled, fillcolor="#FFA07A"];
+  "534" [label="ivy::FeatOriginPlane 534
+5 YZ面", style=filled, fillcolor="#FFA07A"];
+  "540" [label="ivy::FeatOriginPlane 540
+7 ZX面", style=filled, fillcolor="#FFA07A"];
+  "542" [label="ivy::FeatSolidSet 542
+9 零件几何体", style=filled, fillcolor="#FFA07A"];
+  "543" [label="ivy::FeatSketch 543
+12 草图1", style=filled, fillcolor="#FFA07A"];
+  "545" [label="ivy::FeatSupportPositioned 545
+11 ivy::FeatSupportPositioned.ZH_CN1", style=filled, fillcolor="#FFA07A"];
+  "546" [label="ivy::SketchLengthDimension 546
+14 ivy::SketchLengthDimension.ZH_CN1", style=filled, fillcolor="#FFA07A"];
+  "548" [label="ivy::SketchLengthDimension 548
+16 ivy::SketchLengthDimension.ZH_CN2", style=filled, fillcolor="#FFA07A"];
+  "550" [label="ivy::SolidExtrude 550
+40 拉伸1", style=filled, fillcolor="#FFA07A"];
+  "559" [label="ivy::FeatGeomBRep 559
+32 ivy::FeatGeomBRep.ZH_CN1", style=filled, fillcolor="#FFA07A"];
+  "539" [label="ivy::ParmSet 539
+10 参数集", style=filled, fillcolor="#FFA07A"];
+  "531" [label="ivy::TopoContainer 531
+()", style=filled, fillcolor="#FFA07A"];
+  "567" [label="ivy::TopoGroup 567", style=filled, fillcolor="#FFA07A"];
+  "532" [label="BRepContainer 532
+()", style=filled, fillcolor="#FFA07A"];
+  "568" [label="ivy::StableHub 568
+()", style=filled, fillcolor="#FFA07A"];
+}
+0 [label="ivy::Project", shape=box, style="rounded, filled", fillcolor="#337ECC" fontcolor=white, fontsize=24, width=2, height=1];
+  "570" [label="ivy::PartDesignWorkshop 570", style=filled, fillcolor="#FFA07A"];
+  "0" -> "42949673486" [label="Contain", color="#87CEEB"];
+  "569" -> "528" [label="Contain", color="#87CEEB"];
+  "528" -> "527" [label="Contain", color="#87CEEB"];
+  "527" -> "571" [label="Contain", color="#87CEEB"];
+  "528" -> "529" [label="Contain", color="#87CEEB"];
+  "529" -> "530" [label="Contain", color="#87CEEB"];
+  "530" -> "533" [label="Contain", color="#87CEEB"];
+  "533" -> "538" [label="Contain", color="#87CEEB"];
+  "538" -> "536" [label="Contain", color="#87CEEB"];
+  "538" -> "534" [label="Contain", color="#87CEEB"];
+  "538" -> "540" [label="Contain", color="#87CEEB"];
+  "533" -> "542" [label="Contain", color="#87CEEB"];
+  "542" -> "543" [label="Contain", color="#87CEEB"];
+  "543" -> "545" [label="Contain", color="#87CEEB"];
+  "545" -> "536" [label="DependsOn", color="#FFA07A"];
+  "543" -> "546" [label="Contain", color="#87CEEB"];
+  "543" -> "548" [label="Contain", color="#87CEEB"];
+  "543" -> "545" [label="DependsOn", color="#FFA07A"];
+  "543" -> "546" [label="DependsOn", color="#FFA07A"];
+  "543" -> "548" [label="DependsOn", color="#FFA07A"];
+  "542" -> "550" [label="Contain", color="#87CEEB"];
+  "550" -> "559" [label="Contain", color="#87CEEB"];
+  "559" -> "543" [label="DependsOn", color="#FFA07A"];
+  "550" -> "559" [label="DependsOn", color="#FFA07A"];
+  "542" -> "543" [label="DependsOn", color="#FFA07A"];
+  "542" -> "550" [label="DependsOn", color="#FFA07A"];
+  "533" -> "539" [label="Contain", color="#87CEEB"];
+  "529" -> "531" [label="Contain", color="#87CEEB"];
+  "531" -> "567" [label="Contain", color="#87CEEB"];
+  "529" -> "532" [label="Contain", color="#87CEEB"];
+  "532" -> "568" [label="Contain", color="#87CEEB"];
+  "0" -> "569" [label="Contain", color="#87CEEB"];
+  "570" -> "569" [label="DependsOn", color="#FFA07A"];
+  "0" -> "570" [label="Contain", color="#87CEEB"];
+}

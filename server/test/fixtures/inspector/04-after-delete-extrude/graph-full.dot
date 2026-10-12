@@ -1,0 +1,95 @@
+digraph G {
+0 [label="ivy::Project", shape=box, style="rounded, filled", fillcolor="#337ECC" fontcolor=white, fontsize=24, width=2, height=1];
+  "682899800615" [label="ivy::PipelineContext 682899800615", style=filled, fillcolor="#FFA07A"];
+0 [label="ivy::Project", shape=box, style="rounded, filled", fillcolor="#337ECC" fontcolor=white, fontsize=24, width=2, height=1];
+subgraph cluster_528{ 
+label="零件"
+style=filled; fillcolor= "#E8F5E9"; color="#A5D6A7"; 
+  "528" [label="ivy::PartReference 528", style=filled, fillcolor="#ADD8E6"];
+  "513" [label="ivy::PartRepresentation 513", style=filled, fillcolor="#FFA07A"];
+  "512" [label="ivy::VisuContainer 512
+()", style=filled, fillcolor="#FFFFE0"];
+  "514" [label="ivy::ShapeContainer 514
+()", style=filled, fillcolor="#FFA07A"];
+  "515" [label="ivy::FeatContainer 515
+()", style=filled, fillcolor="#FFA07A"];
+  "518" [label="ivy::FeatPart 518
+1 零件", style=filled, fillcolor="#FFFFE0"];
+  "523" [label="ivy::FeatOriginSet 523
+2 默认几何", style=filled, fillcolor="#FFA07A"];
+  "521" [label="ivy::FeatOriginPlane 521
+3 XY面", style=filled, fillcolor="#FFA07A"];
+  "520" [label="ivy::ParmBool 520
+4 Deactivated", style=filled, fillcolor="#FFA07A"];
+  "519" [label="ivy::FeatOriginPlane 519
+5 YZ面", style=filled, fillcolor="#FFA07A"];
+  "522" [label="ivy::ParmBool 522
+6 Deactivated", style=filled, fillcolor="#FFA07A"];
+  "525" [label="ivy::FeatOriginPlane 525
+7 ZX面", style=filled, fillcolor="#FFA07A"];
+  "526" [label="ivy::ParmBool 526
+8 Deactivated", style=filled, fillcolor="#FFA07A"];
+  "527" [label="ivy::FeatSolidSet 527
+9 零件几何体", style=filled, fillcolor="#FFFFE0"];
+  "539" [label="ivy::FeatSketch 539
+12 草图1", style=filled, fillcolor="#FFA07A"];
+  "540" [label="ivy::ParmBool 540
+13 Deactivated", style=filled, fillcolor="#FFA07A"];
+  "541" [label="ivy::FeatSupportPositioned 541
+11 ivy::FeatSupportPositioned.ZH_CN1", style=filled, fillcolor="#FFA07A"];
+  "552" [label="ivy::SketchLengthDimension 552
+14 ivy::SketchLengthDimension.ZH_CN1", style=filled, fillcolor="#FFA07A"];
+  "554" [label="ivy::ParmLength 554
+15 length", style=filled, fillcolor="#FFA07A"];
+  "557" [label="ivy::SketchLengthDimension 557
+16 ivy::SketchLengthDimension.ZH_CN2", style=filled, fillcolor="#FFA07A"];
+  "559" [label="ivy::ParmLength 559
+17 length", style=filled, fillcolor="#FFA07A"];
+  "524" [label="ivy::ParmSet 524
+10 参数集", style=filled, fillcolor="#FFA07A"];
+  "516" [label="ivy::TopoContainer 516
+()", style=filled, fillcolor="#FFFFE0"];
+  "517" [label="BRepContainer 517
+()", style=filled, fillcolor="#FFFFE0"];
+}
+0 [label="ivy::Project", shape=box, style="rounded, filled", fillcolor="#337ECC" fontcolor=white, fontsize=24, width=2, height=1];
+  "532" [label="ivy::PartDesignWorkshop 532", style=filled, fillcolor="#FFA07A"];
+  "0" -> "682899800615" [label="Contain", color="#87CEEB"];
+  "528" -> "513" [label="Contain", color="#87CEEB"];
+  "513" -> "512" [label="Contain", color="#87CEEB"];
+  "513" -> "514" [label="Contain", color="#87CEEB"];
+  "514" -> "515" [label="Contain", color="#87CEEB"];
+  "515" -> "518" [label="Contain", color="#87CEEB"];
+  "518" -> "523" [label="Contain", color="#87CEEB"];
+  "523" -> "521" [label="Contain", color="#87CEEB"];
+  "521" -> "520" [label="Contain", color="#87CEEB"];
+  "521" -> "520" [label="DependsOn", color="#FFA07A"];
+  "523" -> "519" [label="Contain", color="#87CEEB"];
+  "519" -> "522" [label="Contain", color="#87CEEB"];
+  "519" -> "522" [label="DependsOn", color="#FFA07A"];
+  "523" -> "525" [label="Contain", color="#87CEEB"];
+  "525" -> "526" [label="Contain", color="#87CEEB"];
+  "525" -> "526" [label="DependsOn", color="#FFA07A"];
+  "518" -> "527" [label="Contain", color="#87CEEB"];
+  "527" -> "539" [label="Contain", color="#87CEEB"];
+  "539" -> "540" [label="Contain", color="#87CEEB"];
+  "539" -> "541" [label="Contain", color="#87CEEB"];
+  "541" -> "521" [label="DependsOn", color="#FFA07A"];
+  "539" -> "552" [label="Contain", color="#87CEEB"];
+  "552" -> "554" [label="Contain", color="#87CEEB"];
+  "552" -> "554" [label="DependsOn", color="#FFA07A"];
+  "539" -> "557" [label="Contain", color="#87CEEB"];
+  "557" -> "559" [label="Contain", color="#87CEEB"];
+  "557" -> "559" [label="DependsOn", color="#FFA07A"];
+  "539" -> "540" [label="DependsOn", color="#FFA07A"];
+  "539" -> "557" [label="DependsOn", color="#FFA07A"];
+  "539" -> "541" [label="DependsOn", color="#FFA07A"];
+  "539" -> "552" [label="DependsOn", color="#FFA07A"];
+  "527" -> "539" [label="DependsOn", color="#FFA07A"];
+  "518" -> "524" [label="Contain", color="#87CEEB"];
+  "514" -> "516" [label="Contain", color="#87CEEB"];
+  "514" -> "517" [label="Contain", color="#87CEEB"];
+  "0" -> "528" [label="Contain", color="#87CEEB"];
+  "532" -> "528" [label="DependsOn", color="#FFA07A"];
+  "0" -> "532" [label="Contain", color="#87CEEB"];
+}
