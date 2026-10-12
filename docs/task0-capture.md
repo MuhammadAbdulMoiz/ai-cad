@@ -1,13 +1,14 @@
 # Task 0 capture: what the human does
 
 1. Copy `.env.example` to `.env`. Run `start-ivy.bat` and wait until the frontend window prints its local URL. Put the real URL in `.env` as `FRONTEND_URL`.
-2. Open that URL in your normal browser, log in, and create a **new empty part** document.
+2. Open that URL in your normal browser, log in, and create a **new empty part** document in a **disposable test project**. The sequence deletes, undoes, saves and reopens, so never use real work.
 3. In `server/`, run each capture at the moment described.
 
 Rules for every capture:
 - Wait until Ivy has finished recomputing (no spinner/progress) before running the probe.
 - Check the printed project id. It must be the same document every time (and must be the reopened one in step 9). If several projects are open, use `pnpm probe <label> --project <id>`.
 - If the probe prints errors, a WARNING, or 0 objects, fix the situation and re-run the same label (re-running replaces that capture).
+- A probe that exits normally is not proof of good evidence: open that label's `errors.json`. It must be `{}`, unless the error is the expected outcome of step 6, in which case say so in the notes.
 
 | # | Do this in Ivy first | Then run |
 |---|---|---|

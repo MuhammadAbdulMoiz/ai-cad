@@ -374,7 +374,7 @@ This is done by the planning model (Opus), not Haiku. Every answer quotes eviden
   - **Q5 Compute status:** is there a success/error field? Compare `02` vs `05`.
   - **Q6 Dimensions:** are the extrude depth (8) and the sketch width (100 → 120) visible? Give the paths.
   - **Q7 Volatile objects:** between `01` → `02`, which **pre-existing** objects changed? Is each change legitimate (container/timestamp/counter)? List the field paths to strip before hashing.
-  - **Q8 Restoration:** after stripping, does `04-after-delete-extrude` equal `01-after-sketch`? Does `06-after-undo` equal the state before the undone action? This decides whether delete is a safe recovery and whether undo is scoped.
+  - **Q8 Restoration:** after stripping, does `04-after-delete-extrude` equal `01-after-sketch`? Does `06-after-undo` equal the state before the undone action? This decides whether delete is a safe recovery and whether undo is scoped. **Default: recovery stays disabled.** Hash equality is only enough if Q1 shows enumeration is complete (every object reachable, none missing from `objects/`) and Q7 shows hashes are stable for untouched objects. If either is unproven, `evidence.json` sets `supported.no_unexpected_modification = false`. The orchestrator then refuses recovery, and any failed feature means "restart required".
   - **Q9 Reopen:** do ids survive `07` → `08`? If not, which stable key should be compared instead?
   - **Q10 Bodies:** how to count solids.
 - [ ] **Step 2:** End with a **Supported checks** table. Each row is a `CheckKind` (`feature_exists`, `depends_on`, `status_ok`, `body_count`, `dimension`, `no_unexpected_modification`, `reopen_matches`), then supported yes/no, and the evidence reference.
