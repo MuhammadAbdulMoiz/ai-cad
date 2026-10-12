@@ -38,7 +38,7 @@ async function scanToolbar(page: Page) {
       .filter((el) => { const r = el.getBoundingClientRect(); return r.top > minY && r.width > 8 && r.width < 200 && r.height > 8; })
       .filter((el) => !seen.has(el) && seen.add(el))
       .map((el) => { const r = el.getBoundingClientRect();
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2, text: (el as HTMLElement).innerText.trim(),
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, text: ((el as HTMLElement).innerText ?? el.textContent ?? '').trim(),
           title: el.getAttribute('title') ?? '', aria: el.getAttribute('aria-label') ?? '', cls: String(el.className).slice(0, 80) }; });
   }, vh - 140);
   const result = [];
@@ -46,7 +46,7 @@ async function scanToolbar(page: Page) {
     await page.mouse.move(it.x, it.y);
     await page.waitForTimeout(350);
     const tip = await page.evaluate(() => [...document.querySelectorAll('[role="tooltip"], .el-popper, [class*="tooltip"]')]
-      .filter((e) => (e as HTMLElement).offsetParent !== null).map((e) => (e as HTMLElement).innerText.trim()).filter(Boolean).join(' | '));
+      .filter((e) => (e as HTMLElement).offsetParent !== null).map((e) => ((e as HTMLElement).innerText ?? e.textContent ?? '').trim()).filter(Boolean).join(' | '));
     result.push({ ...it, tooltip: tip });
   }
   return result;
@@ -55,14 +55,14 @@ async function scanToolbar(page: Page) {
 /** Labels, inputs and buttons of floating panels/dialogs currently on screen. */
 async function dumpPanels(page: Page) {
   return page.evaluate(() => [...document.querySelectorAll('[role="dialog"], .el-dialog, [class*="panel"], [class*="Panel"], [class*="popover"], .el-dropdown-menu, [role="menu"]')]
-    .filter((e) => (e as HTMLElement).offsetParent !== null && (e as HTMLElement).innerText.trim())
+    .filter((e) => (e as HTMLElement).offsetParent !== null && ((e as HTMLElement).innerText ?? e.textContent ?? '').trim())
     .map((e) => ({
       cls: String(e.className).slice(0, 80),
-      text: (e as HTMLElement).innerText.trim().slice(0, 600),
+      text: ((e as HTMLElement).innerText ?? e.textContent ?? '').trim().slice(0, 600),
       inputs: [...e.querySelectorAll('input, textarea')].map((i) => ({
         type: (i as HTMLInputElement).type, value: (i as HTMLInputElement).value, placeholder: (i as HTMLInputElement).placeholder,
         label: (i.closest('[class*="item"], label, [class*="row"]') as HTMLElement | null)?.innerText.trim().slice(0, 80) ?? '' })),
-      buttons: [...e.querySelectorAll('button, [role="button"]')].map((b) => (b as HTMLElement).innerText.trim()).filter(Boolean),
+      buttons: [...e.querySelectorAll('button, [role="button"]')].map((b) => ((b as HTMLElement).innerText ?? b.textContent ?? '').trim()).filter(Boolean),
     })));
 }
 
