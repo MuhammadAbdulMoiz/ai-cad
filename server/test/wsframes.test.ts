@@ -113,3 +113,22 @@ describe.skipIf(!fs.existsSync(ivyRepo) || !fs.existsSync(measureFile))('decodeC
     expect((at(285).pkg as any).appModelRsp.modelPkgDecoded.header).toMatchObject({ cmd: 'IVY_MEASUREMENT_UPDATE_RSP', featureId: '52' });
   });
 });
+
+const measure2File = path.join(config.runsDir, 'capture-measure2', 'frames.jsonl');
+
+// Record-as-feature off: the UI sends a single preview Create and never commits (docs/session-protocol-capture.md §6).
+describe.skipIf(!fs.existsSync(ivyRepo) || !fs.existsSync(measure2File))('decodeCapture on the measure2 capture', () => {
+  const records: CaptureRecord[] = fs.existsSync(measure2File)
+    ? fs.readFileSync(measure2File, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
+  const decoded = records.length ? decodeCapture(records, loadSchema(ivyRepo)) : [];
+  const inWindow = decoded.filter((d) => d.kind === 'message' && d.frames[0] > 53 && d.frames[0] < 71) as Extract<Decoded, { kind: 'message' }>[];
+
+  it('sends one preview measurement request and nothing that commits', () => {
+    expect(summarize(decoded).nestedUndecoded).toEqual([]);
+    const sent = inWindow.filter((m) => m.dir === 'sent');
+    expect(sent).toHaveLength(1);
+    const req = (sent[0].pkg as any).appModelReq;
+    expect(req.workshopHead).toMatchObject({ workbenchType: 14, isPreview: true, ignoreMark: true, doNotSave: true });
+    expect(req.modelPkgDecoded.header).toMatchObject({ cmd: 'IVY_MEASUREMENT_UPDATE_REQ', isPreview: true });
+  });
+});

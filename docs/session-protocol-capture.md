@@ -154,7 +154,7 @@ This confirms re-plan §4: identity must be re-resolved after every reopen, and 
   - `30007` = `[6, 3]`, `30009` = `[1, 2]`, both unexplained.
   - 0.32 first appears in the **server's** preview notification (record 278), so the values are server-computed.
 - **Interpretation (a hypothesis):** 0.32 m is the perimeter and 0.006 m² the area of a 100 × 60 mm face. In the commit, 320 matches mm, but "6" doesn't match mm² (6000). The display-unit encoding is unknown.
-- **This run persisted the measurement, because "record as feature" was enabled** (the human's setting; role `30008` = `kMeasureInsertToSet` was `true` in all three requests, `zplugin_v1/measurement/model/inc/measurement_role.h:23`). The probe diff added `ivy::Measurement` "Measure1", an `ivy::MeasurementSet` and a `FeatGeomBRep`. Undo went 1 → 2 steps, and Ivy sent 3 version-control change notifications. **This shows the record workflow writes; it does not show that measuring itself writes.** The other roles: `30004` result active, `30005` result values, `30007` result refs, `30009` result-set ids (same header).
+- **This run persisted the measurement, because "record as feature" was enabled** (the human's setting). Role `30008` (`kMeasureInsertToSet`, `zplugin_v1/measurement/model/inc/measurement_role.h:23`) was `true` here, **but it was also `true` with recording off (§6), so it is not the record switch**; the UI decides whether to send the commit. The probe diff added `ivy::Measurement` "Measure1", an `ivy::MeasurementSet` and a `FeatGeomBRep`. Undo went 1 → 2 steps, and Ivy sent 3 version-control change notifications. **This shows the record workflow writes; it does not show that measuring itself writes.** The other roles: `30004` result active, `30005` result values, `30007` result refs, `30009` result-set ids (same header).
 
 **Decoder fix:**
 - Nested `model_pkg` bytes are now decoded by their declared `workbenchType`: 1, 2, 13 → `PartPkg`; 14 → `MeasurementPkg`. Any other workbench is reported in `summary.nestedUndecoded` instead of being guessed.
@@ -165,3 +165,33 @@ This confirms re-plan §4: identity must be re-resolved after every reopen, and 
 - Next experiment (needs its own approval, watch-only like 2a): repeat the measurement with **record as feature disabled**, capture the outgoing requests, and compare the tree, undo history and version-control notifications before and after.
 - Until then, no measure request of any kind is in 2b, and nothing guessed is replayed. Even a preview-only measurement path would consist of model requests (`IVY_APP_MODEL_REQ`, workbench 14), so adding it to the allow-list would be a separate decision after the capture.
 - 2b can still run the **parameter query** exactly as the UI sends it (§3 item 4), with the undo and graph checks. It cannot establish geometry by itself.
+
+## 6. Measurement with record-as-feature off (`measure2`)
+
+Date: 2026-10-13 · Approved: "measure capture with record-as-feature off" · `runs/capture-measure2` (gitignored) · probes `measure2-before`/`measure2-after`. `ai-cad` sent no request; the human measured the top face of `Extrude1` once with recording disabled.
+
+**Handles after this reload:** the part is now 569, `SolidExtrude` 549, and `Measure1` (from §5) 566.
+
+**What the UI sent (records 53–71):**
+
+| Record | Message | Notes |
+|---|---|---|
+| 63 | `IVY_APP_MODEL_REQ`, workbench 14, `IVY_MEASUREMENT_UPDATE_REQ` `{action: Create}` | `isPreview`, `ignoreMark`, `doNotSave` all **true**. Items: `30002`=[1], `30003`= feature 43 `TopoFace` 4, `30004`={}, `30008`=[true] |
+| 64 | `IVY_APP_MODEL_RSP` | preview feature id 1 |
+| 65 | `IVY_APP_MODEL_NTF` (323 bytes) | **contains the doubles 0.32 and 0.006**, server-computed |
+
+- **That's the whole exchange.** There was no `Modify`, no commit, and closing the measure tool sent nothing.
+
+**State before and after (inspector):**
+- Undo history is identical: 1 step, 0 redo, 2 marks, current mark 2, same mark ids and sizes.
+- The graph is identical apart from the volatile `PipelineContext`. Even `FeatContainer._lastId` is unchanged.
+- Ivy sent no version-control change notification.
+
+**Conclusions:**
+1. **The UI's measurement with recording off is a single preview request that leaves no observed trace** in the graph, the undo history or version control. Recording is the separate commit step captured in §5.
+2. It is **still a model request** (`IVY_APP_MODEL_REQ` on the measurement workbench), not an `IVY_QUERY_REQ`. "No trace observed" covers this one run and these three state views; it doesn't prove that every preview is side-effect-free.
+3. **What it measured:** the server's reply carries 0.32 and 0.006 for face 4. That's consistent with a 100 × 60 mm face (perimeter 0.32 m, area 0.006 m²) if the values are SI, but it's **face data**: neither a bounding box nor a volume. The message layout carrying these values isn't decoded field by field yet.
+4. **For 2b and later:**
+   - Allowing this preview request would be a deliberate exception to the "query requests only" allow-list. It's a separate decision.
+   - If you take it, it should be the exact captured shape (input type 1, a single face), with the before/after state checks.
+   - Other input types might give a thickness or body result: what the `30002` values mean is unknown and would need its own capture.
