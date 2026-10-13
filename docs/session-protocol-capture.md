@@ -8,7 +8,8 @@ Date: 2026-10-13 · Re-plan §7.1 · **Observation only.** `ai-cad` sent no WebS
 - Inspector probes `plate1-<step>` were taken at each step end (`server/test/fixtures/inspector/plate1-*`, all `errors.json` = `{}`).
 
 **Evidence:**
-- `runs/capture-plate1/frames.jsonl`: 493 frames + 17 marks, raw and **gitignored**, because received headers carry the user's openId.
+- `runs/capture-plate1/frames.jsonl`: **513 records** (493 WebSocket frames + 17 marks + 3 socket-opened events), raw and **gitignored**, because received headers carry the user's openId.
+- **Index space:** every "frame N" in this report is the record index `i` (0–512) shared by all record types, *not* a count of frames. For example, "frames 484–512" spans frames and marks.
 - `decoded.jsonl` and `summary.json` beside it (`pnpm decode-capture plate1`).
 - Decoder tests run on these bytes (`server/test/wsframes.test.ts`) and skip where the capture is absent.
 
@@ -108,7 +109,7 @@ Notes:
    - Success = reply `featureId > 0` and `result` absent/0.
    - Sketches use `IVY_PART_SKETCH_UPDATE_REQ`: create (no geoms) → geometry and constraints, with dimensions as `DISTANCE_X/Y` constraints → exit.
 2. **Cancel:** for an *uncommitted* preview, simply not committing is enough: no residue was observed. There's no Cancel message to send. A failed **commit** is different. It leaves an extra mark (§2 Failure), so the executor must treat any non-zero `result` on a committing request as **"failed with possible hidden residue"**: stop and report it, even when the graph looks clean (D4 unchanged).
-3. **Identity:** the runtime doc handle (540) is what the page sends as `currentDocId`. It can be read passively from the page's own traffic before any write, then matched against the inspector's `PartReference` handle.
+3. **Identity:** the runtime doc handle (540) is what the page sends as `currentDocId`. Inspector object 540 is the `ivy::PartReference` (`plate1-extrude/graph-full.dot`). It can be read passively from the page's own traffic before any write, then matched against the inspector's `PartReference` handle.
 4. **Verification reads already in use by the UI:**
    - `IVY_QUERY_PARAM_REQ {docId: 540, parmSetId: 10, paramIds: [-1]}`, sent with a `workshopHead`. The reply carries the sketch dimensions as `"100.000000"` and `"60.000000"`.
    - **Units:** depth "8" and lengths "100"/"60" are labelled `unit: "m"`, but the values are millimetre-scale. The unit label can't be trusted for scaling, so Phase 2 has to establish it against a measurement.

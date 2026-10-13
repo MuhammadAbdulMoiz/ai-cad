@@ -174,6 +174,45 @@ The socket URL's `token`, `openId` and `tenantId` are redacted before anything i
 
 **Exit:** you review the capture and this plan before authorizing Phase 2.
 
+### 7.2 Phase 2 proposed scope: read-only queries (awaiting approval)
+
+**Target:** the plate1 document. Project `37649921`/`main`, part handle `540` (`ivy::PartReference`), `Sketch2` = feature 15, `Extrude1` = feature 43.
+
+**2a. Watch-only measurement capture (no `ai-cad` requests).**
+- The measure request (`IVY_QUERY_MEASURE_REQ`) hasn't been observed yet. Its shape is known only from source (`part_design_runtime_serializer.cpp:956-990`: exactly one face element `{featureId, face id}`, returning the body's AABB).
+- With the recorder attached, you use Ivy's own measure tool once on a face of `Extrude1`. The real request and reply are then captured. **If the UI never sends `IVY_QUERY_MEASURE_REQ`, the measure query stays out of 2b**, and Phase 2 reports AABB as unsupported. We don't fall back to a guessed payload.
+
+**2b. Replaying observed read requests.**
+- **Transport:** a new `QueryPort` that is separate from the recorder (the recorder's DevTools wrapper stays untouched). It runs **one fixed page function** that calls `window.__mda_ivySocketService__.getAsyncMessage(IVY_QUERY_REQ, pkg, {timeout})`.
+- **Allow-list:** the port accepts only a typed request: `param {docId, parmSetId, paramIds:[-1]}` or `measure {docId, featureId, faceId}` (only if 2a captured it). The port builds the package from the shape observed in the capture, and nothing else reaches the page. The port's tests check that every other command, query kind or field is refused before anything runs in the page.
+- **Startup probe:** the global exists; `getAsyncMessage` is a function; its project id and tag equal the target. Otherwise fail closed.
+- **Recorder:** it runs alongside, so the exact bytes `ai-cad` sends and receives are evidenced.
+
+**Procedure (each step fails closed):**
+1. **Identity.** The `currentDocId` in the page's own captured traffic must equal 540, and the inspector object 540 must be `ivy::PartReference` in project `37649921`/`main`. You confirm the document.
+2. **Pre-state.** `zcad_get_undo_history` (all marks: ids, counts, current mark, can-undo/redo), plus an inspector graph snapshot.
+3. **Queries.** One PARAM query, then, if 2a captured it, one MEASURE query on feature 43, face 0. Serialized and sent once, with no retry. A timeout is reported as unknown.
+4. **Post-state.** The same snapshots as step 2. **Pass only if the undo history is identical, and the graph is identical apart from the volatile classes** (`PipelineContext`, `VisuGeomObject`). Any other difference, including `FeatContainer._lastId`, fails and is reported.
+5. **Consistency, with no trust in unit labels.**
+   - Take the parameter values (sketch 100, 60 and, if present, extrude depth 8) and the measured AABB extents.
+   - Accept only if one scale factor maps all three onto the extents within tolerance, and that factor is 1 (mm) or 0.001 (m). That factor becomes the established unit.
+   - Expected extents: 100 × 60 × 8 mm. Expected AABB: x −89.79…10.21, y −41.52…18.48, z 0…8 mm, or in m if the factor says so.
+6. **Report.** Values observed, the unit established (or not), state unchanged (or the difference), and the raw evidence paths.
+
+**Fail closed on:**
+- an identity mismatch;
+- a missing or changed page global;
+- a malformed or non-OK reply (`result ≠ 0`, missing fields);
+- a measurement that isn't supported;
+- inconsistent scale factors;
+- any state change.
+
+**Explicitly excluded:** preview, `Create`/`Modify`, commits, sketch updates, cleanup, undo/redo, retries.
+
+**Volume** stays **unsupported**. Phase 2 makes no claim that the solid is verified; AABB plus parameters is the most it can prove.
+
+**Known caveat:** the failed commit's leftover mark #22 is already in this document's undo stack. Phase 2 only checks that the queries don't change it, and doesn't interpret it.
+
 **Impact on existing code:**
 - Keep `inspector.ts`, `snapshot.ts`, `checks.ts`, `store.ts` and `designer.ts`.
 - `executor.ts`: the reply mapping, `MeasureZ` and `plateAcceptance` need changes (optional volume, metres, no pass without evidence).
