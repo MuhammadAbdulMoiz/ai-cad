@@ -1,5 +1,7 @@
 # Protocol spike: building CAD geometry without the UI
 
+> **2026-10-13:** Ivy is now a black box (no Ivy changes). The native-MCP-in-zcad_service plan here is superseded by [the black-box re-plan](specs/2026-10-13-black-box-ivy-integration.md).
+
 Date: 2026-10-12 · **Read-only.** No project was created or mutated during this spike. · Sources: `C:\zixel\mda`, `C:\zixel\ivyproject`.
 
 **Recommendation:** add a small set of **local MCP write tools to `zcad_service`**. Start with one that builds a part from an inline **Toolbox-style feature description** (sketch / extrude / revolve). It runs on the project thread through the same dispatcher the inspector already uses: no auth tokens, no browser automation, server-side failure codes. Verify with the existing inspector, plus the proposed read-only query tools. A direct WebSocket client is the fallback. A frontend bridge is rejected.

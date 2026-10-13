@@ -1,5 +1,7 @@
 # AI-native parametric CAD engineering: design spec
 
+> **2026-10-13:** Ivy is now a black box (no Ivy changes). The native-MCP-in-zcad_service plan here is superseded by [the black-box re-plan](2026-10-13-black-box-ivy-integration.md).
+
 Date: 2026-10-12 · Status: draft for review · **Supersedes** the UI-automation direction of `2026-10-12-ivy-cad-harness-design.md`. Its evidence, verification and run-control rules carry over (§8).
 
 ## 1. Product goal
