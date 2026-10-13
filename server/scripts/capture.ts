@@ -7,7 +7,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
-import { ReadOnlyCdp, type CdpConnection } from '../src/cdpguard';
+import { connect, findEditorTab, NoDevToolsError, shortUrl, type EditorTab } from '../src/cdpconnect';
+import { ReadOnlyCdp } from '../src/cdpguard';
 import { config } from '../src/config';
 import { attachRecorder } from '../src/recorder';
 
@@ -21,54 +22,14 @@ const targetArg = rest.indexOf('--target') >= 0 ? rest[rest.indexOf('--target') 
 const out = path.join(config.runsDir, `capture-${label}`);
 if (fs.existsSync(out)) { console.error(`${out} already exists; pick a new label.`); process.exit(2); }
 
-type Target = { id: string; type: string; url: string; webSocketDebuggerUrl?: string };
-let targets: Target[];
-try {
-  targets = await (await fetch(`http://127.0.0.1:${config.cdpPort}/json/list`)).json() as Target[];
-} catch (e) {
-  console.error(`No harness Chrome on DevTools port ${config.cdpPort} (${(e as Error).message}). Start it with login.bat and keep that window open.`);
-  process.exit(1);
-}
-const shortUrl = (u: string) => { try { const x = new URL(u); return x.origin + x.pathname; } catch { return '?'; } };
-const pages = targets.filter((t) => t.type === 'page' && t.webSocketDebuggerUrl);
-const candidates = targetArg ? pages.filter((t) => t.id === targetArg) : pages.filter((t) => /\/zcad/.test(t.url));
-if (candidates.length !== 1) {
-  console.error(candidates.length ? 'Several editor tabs are open; pick one with --target:' : 'No single editor tab found. Open tabs:');
-  for (const t of pages) console.error(`  ${t.id}  ${shortUrl(t.url)}`);
-  process.exit(2);
-}
-const target = candidates[0];
-
-function connect(url: string): Promise<CdpConnection> {
-  return new Promise((resolve, reject) => {
-    const ws = new WebSocket(url);
-    let nextId = 1;
-    const pending = new Map<number, { ok: (v: unknown) => void; fail: (e: Error) => void }>();
-    const listeners: Array<(m: string, p: unknown) => void> = [];
-    ws.onmessage = (ev) => {
-      const msg = JSON.parse(String(ev.data));
-      if (msg.id !== undefined) {
-        const w = pending.get(msg.id); pending.delete(msg.id);
-        if (msg.error) w?.fail(new Error(msg.error.message)); else w?.ok(msg.result);
-      } else if (msg.method) for (const l of listeners) l(msg.method, msg.params);
-    };
-    ws.onerror = () => reject(new Error('DevTools connection failed'));
-    ws.onopen = () => resolve({
-      send: (method, params) => new Promise((ok, fail) => {
-        const id = nextId++;
-        pending.set(id, { ok, fail });
-        ws.send(JSON.stringify({ id, method, params: params ?? {} }));
-      }),
-      onEvent: (l) => { listeners.push(l); },
-      close: () => ws.close(),
-    });
-  });
-}
+let target: EditorTab;
+try { target = await findEditorTab(config.cdpPort, targetArg); }
+catch (e) { console.error((e as Error).message); process.exit(e instanceof NoDevToolsError ? 1 : 2); }
 
 fs.mkdirSync(out, { recursive: true });
 const file = fs.openSync(path.join(out, 'frames.jsonl'), 'a');
 let count = 0;
-const cdp = new ReadOnlyCdp(await connect(target.webSocketDebuggerUrl!));
+const cdp = new ReadOnlyCdp(await connect(target.webSocketDebuggerUrl));
 const mark = await attachRecorder(cdp, (r) => { fs.writeSync(file, JSON.stringify(r) + '\n'); if (r.type === 'frame') count++; });
 fs.writeFileSync(path.join(out, 'meta.json'), JSON.stringify({ label, page: shortUrl(target.url), startedAt: new Date().toISOString() }, null, 2));
 mark('recorder attached');
