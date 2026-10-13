@@ -130,12 +130,22 @@ These **reduce the race but cannot eliminate it**, and reports say so.
 - It takes inspector snapshots (the existing probe) when the human marks the start and end of each step.
 
 **Decoder** (`server/scripts/decode-capture.ts`, offline, on saved files):
-- **Sent frames** are plain `IvyPkg` (`ProtoSocketService.ts:476-484`).
-- **Received frames:**
-  - Strip the trace-header prefix (`getBinaryFramePayload`).
-  - Reassemble chunks; a chunk under 512 KB ends a message (`ProtoSocketService.ts:66, 700-735`).
-  - Decompress with Node's built-in zstd.
-  - Keep raw tessellation frames (`DocumentTessellationProtocol.ts:617`) aside for D3.
+- **Both directions:**
+  - Strip the optional 35-byte `'Z',1` trace header. The page omits it for `use_local_server` unless `enable_ws_header` is set (`ProtoSocketService.ts:1212-1217, 1588-1594`).
+  - Reassemble chunks; a chunk under 512 KB ends a message. An exact multiple of 512 KB is followed by an empty frame (`:66, 700-713, 2051-2074`).
+  - `sendMessage` sends one unchunked frame (`:485`).
+- **Received messages only:** zstd-decompressed after reassembly (`:745`). The result may be an `IVYDOC01` envelope around the `IvyPkg` (`DocumentTessellationProtocol.ts:231-265`).
+- **Raw `IVTR` mesh frames:** these bypass reassembly. Each one is checked against its 64-byte header (`DocumentTessellationProtocol.ts:617-660`) and kept for D3.
+
+Implemented in `server/src/wsframes.ts`. Any message that fails reassembly, decompression or decoding is listed as undecoded in `summary.json`.
+
+**Run (you start Ivy, the harness Chrome and the project; the scripts only observe):**
+1. `login.bat`: keep that Chrome window open, log in, and open the disposable part.
+2. `pnpm capture <label>`: attaches to the single `/zcad` tab. Then press **F5 yourself**, because sockets opened before the recorder attached aren't seen. Type marks such as `start sketch` / `end sketch`, and `quit` to stop.
+3. Run `pnpm probe <label>-<step> --project <id>` yourself at each step boundary, as in Task 0.
+4. `pnpm decode-capture <label>` (offline) writes `decoded.jsonl` and `summary.json` beside the untouched `frames.jsonl`.
+
+The socket URL's `token`, `openId` and `tenantId` are redacted before anything is written.
 - Decoding uses `protobufjs` (the one new dependency) with Ivy's `.proto` files, which are read in place and never copied or edited.
 
 **Safeguards (agreed 2026-10-13):**
