@@ -195,3 +195,34 @@ Date: 2026-10-13 · Approved: "measure capture with record-as-feature off" · `r
    - Allowing this preview request would be a deliberate exception to the "query requests only" allow-list. It's a separate decision.
    - If you take it, it should be the exact captured shape (input type 1, a single face), with the before/after state checks.
    - Other input types might give a thickness or body result: what the `30002` values mean is unknown and would need its own capture.
+
+## 7. Phase 2b: replayed read requests (approved 2026-10-13)
+
+**Tooling:**
+- `pnpm replay <label> param | measure --feature <id> --face <n>` (`server/scripts/replay.ts`). One operation per run; the human pressed F5, saw the resolved target, and typed `confirm`.
+- Requests are encoded by `server/src/queryport.ts`, which only expresses the two approved operations. Its tests are byte-identical to plate1 record 295 and measure2 record 63.
+- They're sent through `PageCall` (`server/src/pagecall.ts`): a single fixed page function calling the page's `getRawAsyncMessage`.
+- Checked by `server/src/replaycheck.ts`:
+  - the target from the page's model-socket traffic, cross-checked with the page socket and the inspector, and re-checked right before sending;
+  - exactly the expected traffic, with our bytes on the wire;
+  - full inspector object JSON and undo history before and after, with only `ivy::PipelineContext` allowed to differ.
+- Evidence: `runs/replay-param1/`, `runs/replay-measure1/` (`result.json` and `frames.jsonl`, gitignored).
+
+| Run | Target | Traffic | State | Verdict |
+|---|---|---|---|---|
+| `param1` | project 37649921/main, workshop 1, document 575 (`PartReference` `01N1HFW5NFCJTCPZ4VTKXZA88P`), parmSet 10 | 1 sent (our bytes) → 1 `IVY_QUERY_RSP`, same asyncId; nothing else on the model socket | identical | **passed** |
+| `measure1` | same; feature 43 (`SolidExtrude`, also the tip), face 4 | 1 sent (our bytes) → 1 `IVY_APP_MODEL_RSP` (`IVY_MEASUREMENT_UPDATE_RSP`) + 1 workbench-14 `IVY_APP_MODEL_NTF` | identical | **passed** |
+
+**Parameter values returned (`param1`):**
+- Sketch2 dimensions: `100.000000` and `60.000000`.
+- ⚠ `Extrude1\Depth` = **10**, but the extrude was built to 8. **8** is in an unnamed `Extrude1\ivy::ParmLength.EN_US13`.
+- The captured commit sent the depth (role `31004`) as an unnamed `ParmLength` (§2). So *probably* the unnamed one drives the geometry, and the named "Depth" is a default. **Parameter names can't identify the driving value.**
+- All lengths are labelled `unit: "m"` but are mm-scale.
+
+**Measurement returned (`measure1`):**
+- The server notification contains the doubles **0.32 and 0.006** for face 4, the same as the UI's own preview in §6.
+- They're consistent with a 100 × 60 mm face (perimeter 0.32 m, area 0.006 m²), but the field mapping is still not decoded, so they're reported as raw server values.
+
+**What 2b establishes:** `ai-cad` can send exactly the UI's own read-style requests, and the before/after checks found no trace in the inspector-visible state. These checks are safeguards, not a proof that the requests can never have side effects.
+
+**What it doesn't establish:** the solid's bounding box or volume, which value drives the extrude depth, or the units.
