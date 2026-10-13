@@ -1,6 +1,6 @@
 # Black-box Ivy integration: re-plan
 
-Date: 2026-10-13 · Status: **decisions recorded (§9); Phase 1 (watch-only) awaiting go-ahead** · Read-only investigation: no request was sent to a live `zcad_service`, and no file in `ivyproject` or `mda` was modified.
+Date: 2026-10-13 · Status: **Phase 1 captured. Results and corrections in [session-protocol-capture.md](../session-protocol-capture.md), notably: no Confirm action (the commit is a non-preview Modify); cancel sends nothing; a failed commit leaves an undo mark. Phase 2 awaits review.** · Read-only investigation: no request was sent to a live `zcad_service`, and no file in `ivyproject` or `mda` was modified.
 
 **Supersedes:**
 - protocol-spike.md §4 path A and §5 (native MCP write tools in `zcad_service`);

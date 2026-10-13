@@ -1,0 +1,179 @@
+digraph G {
+0 [label="ivy::Project", shape=box, style="rounded, filled", fillcolor="#337ECC" fontcolor=white, fontsize=24, width=2, height=1];
+  "403726926379" [label="ivy::PipelineContext 403726926379", style=filled, fillcolor="#FFA07A"];
+0 [label="ivy::Project", shape=box, style="rounded, filled", fillcolor="#337ECC" fontcolor=white, fontsize=24, width=2, height=1];
+subgraph cluster_540{ 
+label="Part"
+style=filled; fillcolor= "#E8F5E9"; color="#A5D6A7"; 
+  "540" [label="ivy::PartReference 540", style=filled, fillcolor="#ADD8E6"];
+  "524" [label="ivy::PartRepresentation 524", style=filled, fillcolor="#FFA07A"];
+  "521" [label="ivy::VisuContainer 521
+()", style=filled, fillcolor="#FFFFE0"];
+  "648" [label="ivy::VisuGeomObject 648", style=filled, fillcolor="#FFA07A"];
+  "649" [label="ivy::VisuGeomObject 649", style=filled, fillcolor="#FFA07A"];
+  "523" [label="ivy::ShapeContainer 523
+()", style=filled, fillcolor="#FFA07A"];
+  "522" [label="ivy::TopoContainer 522
+()", style=filled, fillcolor="#FFFFE0"];
+  "643" [label="ivy::TopoGroup 643", style=filled, fillcolor="#FFFFE0"];
+  "525" [label="ivy::FeatContainer 525
+()", style=filled, fillcolor="#FFFFE0"];
+  "526" [label="ivy::FeatPart 526
+1 Part", style=filled, fillcolor="#FFFFE0"];
+  "528" [label="ivy::FeatOriginSet 528
+2 Default Geometry", style=filled, fillcolor="#FFA07A"];
+  "527" [label="ivy::FeatOriginPlane 527
+3 XY Plane", style=filled, fillcolor="#FFA07A"];
+  "529" [label="ivy::ParmBool 529
+4 Deactivated", style=filled, fillcolor="#FFA07A"];
+  "532" [label="ivy::FeatOriginPlane 532
+5 YZ Plane", style=filled, fillcolor="#FFA07A"];
+  "534" [label="ivy::ParmBool 534
+6 Deactivated", style=filled, fillcolor="#FFA07A"];
+  "531" [label="ivy::FeatOriginPlane 531
+7 ZX Plane", style=filled, fillcolor="#FFA07A"];
+  "533" [label="ivy::ParmBool 533
+8 Deactivated", style=filled, fillcolor="#FFA07A"];
+  "535" [label="ivy::FeatSolidSet 535
+9 Part Body", style=filled, fillcolor="#FFFFE0"];
+  "537" [label="ivy::FeatSketch 537
+12 Sketch1", style=filled, fillcolor="#FFA07A"];
+  "538" [label="ivy::ParmBool 538
+13 Deactivated", style=filled, fillcolor="#FFA07A"];
+  "539" [label="ivy::FeatSupportPositioned 539
+11 ivy::FeatSupportPositioned.EN_US1", style=filled, fillcolor="#FFA07A"];
+  "543" [label="ivy::FeatSketch 543
+15 Sketch2", style=filled, fillcolor="#FFFFE0"];
+  "544" [label="ivy::ParmBool 544
+16 Deactivated", style=filled, fillcolor="#FFA07A"];
+  "545" [label="ivy::FeatSupportPositioned 545
+14 ivy::FeatSupportPositioned.EN_US2", style=filled, fillcolor="#FFA07A"];
+  "564" [label="ivy::SketchLengthDimension 564
+17 ivy::SketchLengthDimension.EN_US1", style=filled, fillcolor="#FFA07A"];
+  "566" [label="ivy::ParmLength 566
+18 length", style=filled, fillcolor="#FFA07A"];
+  "575" [label="ivy::SketchLengthDimension 575
+19 ivy::SketchLengthDimension.EN_US2", style=filled, fillcolor="#FFA07A"];
+  "577" [label="ivy::ParmLength 577
+20 length", style=filled, fillcolor="#FFA07A"];
+  "626" [label="ivy::SolidExtrude 626
+43 Extrude1", style=filled, fillcolor="#FFFFE0"];
+  "627" [label="ivy::ParmBool 627
+44 Deactivated", style=filled, fillcolor="#FFFFE0"];
+  "628" [label="ivy::ParmLength 628
+45 ThickenLength_0", style=filled, fillcolor="#FFFFE0"];
+  "629" [label="ivy::ParmLength 629
+46 ThickenLength_1", style=filled, fillcolor="#FFFFE0"];
+  "630" [label="ivy::ParmLength 630
+47 Depth", style=filled, fillcolor="#FFFFE0"];
+  "631" [label="ivy::ParmLength 631
+48 OffsetFromStartDistance", style=filled, fillcolor="#FFFFE0"];
+  "632" [label="ivy::ParmLength 632
+49 Direction2Depth", style=filled, fillcolor="#FFFFE0"];
+  "633" [label="ivy::ParmAngle 633
+50 DraftAngle", style=filled, fillcolor="#FFFFE0"];
+  "634" [label="ivy::ParmAngle 634
+51 Draft2Angle", style=filled, fillcolor="#FFFFE0"];
+  "635" [label="ivy::FeatGeomBRep 635
+35 ivy::FeatGeomBRep.EN_US1", style=filled, fillcolor="#FFFFE0"];
+  "636" [label="ivy::ParmLength 636
+36 ivy::ParmLength.EN_US13", style=filled, fillcolor="#FFFFE0"];
+  "637" [label="ivy::ParmLength 637
+37 ivy::ParmLength.EN_US14", style=filled, fillcolor="#FFFFE0"];
+  "638" [label="ivy::ParmAngle 638
+38 ivy::ParmAngle.EN_US5", style=filled, fillcolor="#FFFFE0"];
+  "639" [label="ivy::ParmLength 639
+39 ivy::ParmLength.EN_US15", style=filled, fillcolor="#FFFFE0"];
+  "640" [label="ivy::ParmAngle 640
+40 ivy::ParmAngle.EN_US6", style=filled, fillcolor="#FFFFE0"];
+  "641" [label="ivy::ParmLength 641
+41 ivy::ParmLength.EN_US16", style=filled, fillcolor="#FFFFE0"];
+  "642" [label="ivy::ParmLength 642
+42 ivy::ParmLength.EN_US17", style=filled, fillcolor="#FFFFE0"];
+  "536" [label="ivy::ParmSet 536
+10 Parameter Set", style=filled, fillcolor="#FFA07A"];
+  "530" [label="BRepContainer 530
+()", style=filled, fillcolor="#FFFFE0"];
+  "644" [label="ivy::StableHub 644
+()", style=filled, fillcolor="#FFFFE0"];
+}
+0 [label="ivy::Project", shape=box, style="rounded, filled", fillcolor="#337ECC" fontcolor=white, fontsize=24, width=2, height=1];
+  "541" [label="ivy::PartDesignWorkshop 541", style=filled, fillcolor="#FFA07A"];
+  "0" -> "403726926379" [label="Contain", color="#87CEEB"];
+  "540" -> "524" [label="Contain", color="#87CEEB"];
+  "524" -> "521" [label="Contain", color="#87CEEB"];
+  "521" -> "648" [label="Contain", color="#87CEEB"];
+  "521" -> "649" [label="Contain", color="#87CEEB"];
+  "524" -> "523" [label="Contain", color="#87CEEB"];
+  "523" -> "522" [label="Contain", color="#87CEEB"];
+  "522" -> "643" [label="Contain", color="#87CEEB"];
+  "523" -> "525" [label="Contain", color="#87CEEB"];
+  "525" -> "526" [label="Contain", color="#87CEEB"];
+  "526" -> "528" [label="Contain", color="#87CEEB"];
+  "528" -> "527" [label="Contain", color="#87CEEB"];
+  "527" -> "529" [label="Contain", color="#87CEEB"];
+  "527" -> "529" [label="DependsOn", color="#FFA07A"];
+  "528" -> "532" [label="Contain", color="#87CEEB"];
+  "532" -> "534" [label="Contain", color="#87CEEB"];
+  "532" -> "534" [label="DependsOn", color="#FFA07A"];
+  "528" -> "531" [label="Contain", color="#87CEEB"];
+  "531" -> "533" [label="Contain", color="#87CEEB"];
+  "531" -> "533" [label="DependsOn", color="#FFA07A"];
+  "526" -> "535" [label="Contain", color="#87CEEB"];
+  "535" -> "537" [label="Contain", color="#87CEEB"];
+  "537" -> "538" [label="Contain", color="#87CEEB"];
+  "537" -> "539" [label="Contain", color="#87CEEB"];
+  "539" -> "527" [label="DependsOn", color="#FFA07A"];
+  "537" -> "538" [label="DependsOn", color="#FFA07A"];
+  "537" -> "539" [label="DependsOn", color="#FFA07A"];
+  "535" -> "543" [label="Contain", color="#87CEEB"];
+  "543" -> "544" [label="Contain", color="#87CEEB"];
+  "543" -> "545" [label="Contain", color="#87CEEB"];
+  "545" -> "527" [label="DependsOn", color="#FFA07A"];
+  "543" -> "564" [label="Contain", color="#87CEEB"];
+  "564" -> "566" [label="Contain", color="#87CEEB"];
+  "564" -> "566" [label="DependsOn", color="#FFA07A"];
+  "543" -> "575" [label="Contain", color="#87CEEB"];
+  "575" -> "577" [label="Contain", color="#87CEEB"];
+  "575" -> "577" [label="DependsOn", color="#FFA07A"];
+  "543" -> "544" [label="DependsOn", color="#FFA07A"];
+  "543" -> "545" [label="DependsOn", color="#FFA07A"];
+  "543" -> "564" [label="DependsOn", color="#FFA07A"];
+  "543" -> "575" [label="DependsOn", color="#FFA07A"];
+  "535" -> "626" [label="Contain", color="#87CEEB"];
+  "626" -> "627" [label="Contain", color="#87CEEB"];
+  "626" -> "628" [label="Contain", color="#87CEEB"];
+  "626" -> "629" [label="Contain", color="#87CEEB"];
+  "626" -> "630" [label="Contain", color="#87CEEB"];
+  "626" -> "631" [label="Contain", color="#87CEEB"];
+  "626" -> "632" [label="Contain", color="#87CEEB"];
+  "626" -> "633" [label="Contain", color="#87CEEB"];
+  "626" -> "634" [label="Contain", color="#87CEEB"];
+  "626" -> "635" [label="Contain", color="#87CEEB"];
+  "635" -> "543" [label="DependsOn", color="#FFA07A"];
+  "626" -> "636" [label="Contain", color="#87CEEB"];
+  "626" -> "637" [label="Contain", color="#87CEEB"];
+  "626" -> "638" [label="Contain", color="#87CEEB"];
+  "626" -> "639" [label="Contain", color="#87CEEB"];
+  "626" -> "640" [label="Contain", color="#87CEEB"];
+  "626" -> "641" [label="Contain", color="#87CEEB"];
+  "626" -> "642" [label="Contain", color="#87CEEB"];
+  "626" -> "627" [label="DependsOn", color="#FFA07A"];
+  "626" -> "635" [label="DependsOn", color="#FFA07A"];
+  "626" -> "636" [label="DependsOn", color="#FFA07A"];
+  "626" -> "637" [label="DependsOn", color="#FFA07A"];
+  "626" -> "638" [label="DependsOn", color="#FFA07A"];
+  "626" -> "639" [label="DependsOn", color="#FFA07A"];
+  "626" -> "640" [label="DependsOn", color="#FFA07A"];
+  "626" -> "628" [label="DependsOn", color="#FFA07A"];
+  "626" -> "629" [label="DependsOn", color="#FFA07A"];
+  "535" -> "537" [label="DependsOn", color="#FFA07A"];
+  "535" -> "543" [label="DependsOn", color="#FFA07A"];
+  "535" -> "626" [label="DependsOn", color="#FFA07A"];
+  "526" -> "536" [label="Contain", color="#87CEEB"];
+  "523" -> "530" [label="Contain", color="#87CEEB"];
+  "530" -> "644" [label="Contain", color="#87CEEB"];
+  "0" -> "540" [label="Contain", color="#87CEEB"];
+  "541" -> "540" [label="DependsOn", color="#FFA07A"];
+  "0" -> "541" [label="Contain", color="#87CEEB"];
+}

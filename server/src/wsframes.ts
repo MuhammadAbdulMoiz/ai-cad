@@ -68,6 +68,40 @@ function decodePkg(schema: Schema, bytes: Uint8Array): { cmd?: string; asyncId?:
   return { cmd: obj.header?.cmd, asyncId: obj.header?.asyncId, pkg: obj };
 }
 
+/**
+ * Node's zstd returns partial output for a truncated frame instead of failing, so the frame structure is walked
+ * here (RFC 8878 §3.1.1): exactly one frame, blocks up to the last one, the checksum if declared, then the end of
+ * the buffer. Returns the declared content size, if any. The checksum value itself is not verified (no XXH64).
+ */
+export function checkZstdFrame(b: Uint8Array): number | undefined {
+  const fail = (why: string): never => { throw new Error(`zstd frame: ${why}`); };
+  if (b.length < 6 || b[0] !== 0x28 || b[1] !== 0xb5 || b[2] !== 0x2f || b[3] !== 0xfd) fail('missing magic');
+  const fhd = b[4];
+  const single = (fhd >> 5) & 1, checksum = (fhd >> 2) & 1, fcsFlag = fhd >> 6;
+  if ((fhd >> 3) & 1) fail('reserved bit set');
+  let o = 5 + (single ? 0 : 1) + [0, 1, 2, 4][fhd & 3];
+  const fcsSize = fcsFlag === 0 ? (single ? 1 : 0) : [0, 2, 4, 8][fcsFlag];
+  if (o + fcsSize > b.length) fail('truncated header');
+  let size: number | undefined;
+  if (fcsSize) {
+    size = 0;
+    for (let i = fcsSize - 1; i >= 0; i--) size = size * 256 + b[o + i];
+    if (fcsSize === 2) size += 256;
+  }
+  o += fcsSize;
+  for (let last = 0; !last;) {
+    if (o + 3 > b.length) fail('truncated block header');
+    const h = b[o] | (b[o + 1] << 8) | (b[o + 2] << 16);
+    last = h & 1;
+    const type = (h >> 1) & 3, blockSize = h >>> 3;
+    if (type === 3) fail('reserved block type');
+    o += 3 + (type === 1 ? 1 : blockSize);
+  }
+  o += checksum ? 4 : 0;
+  if (o !== b.length) fail(o > b.length ? `truncated by ${o - b.length} bytes` : `${b.length - o} trailing bytes`);
+  return size;
+}
+
 function readEnvelope(b: Uint8Array): { proto: Uint8Array; payloads: number } {
   const v = new DataView(b.buffer, b.byteOffset, b.byteLength);
   let o = ENVELOPE_MAGIC.length;
@@ -113,7 +147,11 @@ export function decodeCapture(records: CaptureRecord[], schema: Schema): Decoded
     const base = { kind: 'message' as const, dir, requestId, frames: p.frames, t: p.t, traceHeader: p.trace, wireBytes: p.wire };
     let bytes: Uint8Array = merged;
     if (dir === 'received') {
-      try { bytes = zlib.zstdDecompressSync(merged); }
+      try {
+        const declared = checkZstdFrame(merged);
+        bytes = zlib.zstdDecompressSync(merged);
+        if (declared !== undefined && bytes.length !== declared) throw new Error(`decompressed ${bytes.length} bytes, frame declares ${declared}`);
+      }
       catch (e) { out.push({ ...base, status: 'undecoded', error: `zstd: ${(e as Error).message}` }); return; }
     }
     let envelope = false;
