@@ -10,7 +10,7 @@ import { decodeCapture, loadSchema } from '../src/wsframes';
 
 const ivyRepo = process.env.IVY_REPO || 'C:\\zixel\\ivyproject';
 const file = (l: string) => path.join(config.runsDir, `capture-${l}`, 'frames.jsonl');
-const ready = fs.existsSync(ivyRepo) && fs.existsSync(file('plate1')) && fs.existsSync(file('measure2'));
+const ready = fs.existsSync(path.join(ivyRepo, 'ivyproto', 'proto', 'ivyproto.proto')) && fs.existsSync(file('plate1')) && fs.existsSync(file('measure2'));
 
 describe.skipIf(!ready)('replay checks on captured traffic', () => {
   const schema = ready ? loadSchema(ivyRepo) : (undefined as never);

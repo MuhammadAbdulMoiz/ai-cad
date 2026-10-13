@@ -11,7 +11,7 @@ import { decodeCapture, loadSchema, summarize, type Decoded } from '../src/wsfra
 const ivyRepo = process.env.IVY_REPO || 'C:\\zixel\\ivyproject';
 const captureFile = path.join(config.runsDir, 'capture-plate1', 'frames.jsonl');
 
-describe.skipIf(!fs.existsSync(ivyRepo))('loadSchema', () => {
+describe.skipIf(!fs.existsSync(path.join(ivyRepo, 'ivyproto', 'proto', 'ivyproto.proto')))('loadSchema', () => {
   it("loads IvyPkg and PartPkg from Ivy's .proto files", () => {
     const s = loadSchema(ivyRepo);
     expect(s.IvyPkg.fullName).toBe('.ivyproto.IvyPkg');
@@ -21,10 +21,10 @@ describe.skipIf(!fs.existsSync(ivyRepo))('loadSchema', () => {
   });
 });
 
-describe.skipIf(!fs.existsSync(ivyRepo) || !fs.existsSync(captureFile))('decodeCapture on the plate1 capture', () => {
+describe.skipIf(!fs.existsSync(path.join(ivyRepo, 'ivyproto', 'proto', 'ivyproto.proto')) || !fs.existsSync(captureFile))('decodeCapture on the plate1 capture', () => {
   const records: CaptureRecord[] = fs.existsSync(captureFile)
     ? fs.readFileSync(captureFile, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
-  const schema = fs.existsSync(ivyRepo) ? loadSchema(ivyRepo) : (undefined as never);
+  const schema = fs.existsSync(path.join(ivyRepo, 'ivyproto', 'proto', 'ivyproto.proto')) ? loadSchema(ivyRepo) : (undefined as never);
   const decoded = records.length ? decodeCapture(records, schema) : [];
   const at = (frame: number) => decoded.find((d) => d.frames[0] === frame) as Extract<Decoded, { kind: 'message' }>;
   const part = (frame: number) => { const p: any = at(frame).pkg; return (p.appModelReq ?? p.appModelRsp).modelPkgDecoded; };
@@ -91,7 +91,7 @@ describe.skipIf(!fs.existsSync(ivyRepo) || !fs.existsSync(captureFile))('decodeC
 
 const measureFile = path.join(config.runsDir, 'capture-measure1', 'frames.jsonl');
 
-describe.skipIf(!fs.existsSync(ivyRepo) || !fs.existsSync(measureFile))('decodeCapture on the measure1 capture', () => {
+describe.skipIf(!fs.existsSync(path.join(ivyRepo, 'ivyproto', 'proto', 'ivyproto.proto')) || !fs.existsSync(measureFile))('decodeCapture on the measure1 capture', () => {
   const records: CaptureRecord[] = fs.existsSync(measureFile)
     ? fs.readFileSync(measureFile, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
   const decoded = records.length ? decodeCapture(records, loadSchema(ivyRepo)) : [];
@@ -117,7 +117,7 @@ describe.skipIf(!fs.existsSync(ivyRepo) || !fs.existsSync(measureFile))('decodeC
 const measure2File = path.join(config.runsDir, 'capture-measure2', 'frames.jsonl');
 
 // Record-as-feature off: the UI sends a single preview Create and never commits (docs/session-protocol-capture.md §6).
-describe.skipIf(!fs.existsSync(ivyRepo) || !fs.existsSync(measure2File))('decodeCapture on the measure2 capture', () => {
+describe.skipIf(!fs.existsSync(path.join(ivyRepo, 'ivyproto', 'proto', 'ivyproto.proto')) || !fs.existsSync(measure2File))('decodeCapture on the measure2 capture', () => {
   const records: CaptureRecord[] = fs.existsSync(measure2File)
     ? fs.readFileSync(measure2File, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
   const decoded = records.length ? decodeCapture(records, loadSchema(ivyRepo)) : [];

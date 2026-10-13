@@ -29,7 +29,7 @@ describe('validateOp', () => {
 
 // The encoded body must equal, byte for byte, what the UI itself sent in the captures.
 const capture = (label: string) => path.join(config.runsDir, `capture-${label}`, 'frames.jsonl');
-const haveCaptures = fs.existsSync(ivyRepo) && fs.existsSync(capture('plate1')) && fs.existsSync(capture('measure2'));
+const haveCaptures = fs.existsSync(path.join(ivyRepo, 'ivyproto', 'proto', 'ivyproto.proto')) && fs.existsSync(capture('plate1')) && fs.existsSync(capture('measure2'));
 
 describe.skipIf(!haveCaptures)('encodeOp reproduces the captured UI requests', () => {
   const schema = haveCaptures ? loadSchema(ivyRepo) : (undefined as never);

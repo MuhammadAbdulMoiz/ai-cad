@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { CdpConnection } from '../src/cdpguard';
 import { PAGE_FN, PageCall } from '../src/pagecall';
@@ -49,8 +50,8 @@ describe('PageCall', () => {
   });
 });
 
-describe.skipIf(!fs.existsSync(ivyRepo))('PageCall.send', () => {
-  const schema = fs.existsSync(ivyRepo) ? loadSchema(ivyRepo) : (undefined as never);
+describe.skipIf(!fs.existsSync(path.join(ivyRepo, 'ivyproto', 'proto', 'ivyproto.proto')))('PageCall.send', () => {
+  const schema = fs.existsSync(path.join(ivyRepo, 'ivyproto', 'proto', 'ivyproto.proto')) ? loadSchema(ivyRepo) : (undefined as never);
 
   it.each([
     { kind: 'commit', docId: 1 },

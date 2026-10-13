@@ -226,3 +226,36 @@ Date: 2026-10-13 · Approved: "measure capture with record-as-feature off" · `r
 **What 2b establishes:** `ai-cad` can send exactly the UI's own read-style requests, and the before/after checks found no trace in the inspector-visible state. These checks are safeguards, not a proof that the requests can never have side effects.
 
 **What it doesn't establish:** the solid's bounding box or volume, which value drives the extrude depth, or the units.
+
+## 8. Measurement notification decoded (offline, no new Ivy interaction)
+
+Inputs: the measurement notifications already captured, the UI's (`measure2` record 65) and `ai-cad`'s replay (`replay-measure1`). No request was sent.
+
+**Structure (verified on both):**
+- `IVY_APP_MODEL_NTF` → `modelDescs[0]` (workbench 14) → `ivymeasurement.MeasurementPkg`:
+  - header `cmd = IVY_MEASUREMENT_SET_UPDATE_REQ`;
+  - body **`data_ntf`**, which decodes as **`ivypart.PartDataNtf`** and **re-encodes byte-identically**.
+- It holds exactly one `featUpdateFeature` of type `Measurement`: the preview feature (temporary id −11) named "Measure1".
+
+**Result fields:**
+- **Index alignment.** The server appends the four result lists together, one entry per result (`ivyproject/zplugin_v1/measurement/model/inc/measurement.h:88-96`), so index *i* lines up across roles.
+- **Role names** come from `measurement_role.h:15-23`. **Type codes** come from `MeasureType` in `measurement_types.h:18-50`.
+
+| i | `30007` type | `30005` value | `30004` active | `30009` set id |
+|---|---|---|---|---|
+| 0 | 6 = `kPerimeter` | 0.32 | false | 1 |
+| 1 | 3 = `kArea` | 0.006 | false | 2 |
+
+- `30003` (inputs) = feature 43, `TopoFace` 4: the face that was measured.
+
+**What this establishes:**
+- `ai-cad` can now read **labelled** results: *perimeter = 0.32* and *area = 0.006* for face 4 of feature 43. This comes from `server/src/measureresult.ts`, tested on both real notifications plus a truncated variant.
+- **Units are not sent.** The values fit SI (0.32 m = 320 mm = 2 × (100 + 60); 0.006 m² = 6000 mm² = 100 × 60), and that is consistent with the face being 100 × 60 mm. But the unit is still an inference, not a field.
+
+**Still not established:**
+- The solid's thickness, bounding box or volume.
+- Which parameter drives the extrude depth (§7).
+
+`MeasureType` also defines `kVolume` (4), `kAabbLength`/`Width`/`Height` (107–109), `kMinDist`/`kMaxDist` (14/15) and `kParallelDist` (12). Whether the UI or the server can produce them, and for which inputs, is unknown until captured. That's step 2, which needs its own approval.
+
+**Test-harness fix found while doing this:** the session's sandbox lets Node read files inside the IvyProject repo but not stat the repo directory itself. The tests' "is the Ivy repo present" guard checked the directory, so it could silently skip. Guards now check `ivyproto/proto/ivyproto.proto`; 213 tests run, none skipped.
