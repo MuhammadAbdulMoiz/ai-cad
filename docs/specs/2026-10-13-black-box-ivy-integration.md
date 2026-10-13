@@ -138,6 +138,14 @@ These **reduce the race but cannot eliminate it**, and reports say so.
   - Keep raw tessellation frames (`DocumentTessellationProtocol.ts:617`) aside for D3.
 - Decoding uses `protobufjs` (the one new dependency) with Ivy's `.proto` files, which are read in place and never copied or edited.
 
+**Safeguards (agreed 2026-10-13):**
+- **Recorder.** The recorder reaches the browser only through a fail-closed DevTools wrapper that allows only `Network.enable` and detach. Any other command throws.
+- **Wrapper tests.** The wrapper is tested on its own against a fake connection: allowed commands pass, and every other command (`Runtime.*`, `Input.*`, `Page.*`, raw sends) is refused before reaching the connection.
+- **Source scan.** A scan of the recorder's source for page actions is an extra guardrail only. It proves nothing about the recorder's inability to send.
+- **Decoder order.** Received responses are reassembled from their chunks first, following framing rules checked against the captured bytes. Only the reassembled message is decompressed and decoded. Individual chunks are never expected to decompress on their own.
+- **Raw frames.** Original frames are kept untouched beside every decode result. Messages that fail reconstruction or decoding are listed as *undecoded*, with their frame indexes and byte counts, so they can be diagnosed.
+- **Test data.** Decoder tests use only captured bytes.
+
 **Your steps** (in a disposable project and part; each step is bracketed by start/end marks):
 1. Open the empty part and stay idle (baseline: heartbeats and background traffic).
 2. Draw a rectangle sketch on XY, 100 × 60, and exit the sketch.
