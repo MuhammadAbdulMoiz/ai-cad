@@ -1,6 +1,6 @@
 # Black-box Ivy integration: re-plan
 
-Date: 2026-10-13 · Status: **plan for review; no code changed** · Read-only investigation: no request was sent to a live `zcad_service`, and no file in `ivyproject` or `mda` was modified.
+Date: 2026-10-13 · Status: **decisions recorded (§9); Phase 1 (watch-only) awaiting go-ahead** · Read-only investigation: no request was sent to a live `zcad_service`, and no file in `ivyproject` or `mda` was modified.
 
 **Supersedes:**
 - protocol-spike.md §4 path A and §5 (native MCP write tools in `zcad_service`);
@@ -57,6 +57,11 @@ Costs:
 - **Reads:** `QueryReq` with PARAM, MEASURE, DOC or META, plus the inspector MCP tools.
 - **Writes:** sketch update and `feat_update_req` only, and only through the write path, after the identity check.
 - The port rejects any other command.
+- A request type joins the allow-list only after Phase 1 has captured it and its arguments have a typed validator.
+- **The planner never builds protocol messages.** It emits a validated `FeaturePlan`, and the port alone turns approved plan steps into requests.
+- Accepting the browser hook doesn't make every internal Ivy request safe.
+
+**Approval gate:** Claude proposes, `ai-cad` validates, and the human authorizes each write. This stays until the safeguards are proven.
 
 ## 4. Target identity (vision §5)
 
@@ -73,7 +78,13 @@ Costs:
 4. **Bind** `{projectId, tag, handle, uuid, name, tip feature}` and record it in `run_config`.
 5. **Immediately before every write**, re-read handle → uuid and class with `zcad_get_object_json`. Any mismatch, or an editor that isn't idle (an open task panel or sketch session), aborts the write.
 
-**Gap:** unmodified Ivy has no compare-and-set on document identity, so a short race remains between the check and the write. Mitigation: the human doesn't edit during a run, and every write is approved.
+**Gap:** unmodified Ivy has no compare-and-set on document identity, so a short race remains between the check and the write. Mitigations:
+- Operations are serialized: one request in flight, and the next is sent only after the previous reply and snapshot.
+- The active document is re-verified immediately before each dispatch.
+- The run stops if the document or the tip feature changed.
+- The human doesn't edit during a run, and every write is approved.
+
+These **reduce the race but cannot eliminate it**, and reports say so.
 
 ## 5. Verification without Ivy changes
 
@@ -82,12 +93,14 @@ Costs:
 | New feature exists; its class, `DependsOn`, persistence across reopen | inspector | **Supported** (Task 0) |
 | Sketch dimensions and extrude `Depth` values | `QueryReq IVY_QUERY_PARAM_REQ {docId, parmSetId, paramIds:[-1]}`. Needs only `doc_id`, no workshop (`app_framework/query_system.cpp:42-58,100-112`). | Prove live (Phase 2) |
 | Bounding box | `QueryReq IVY_QUERY_MEASURE_REQ`. Needs **exactly one face element** `{feature_id, face index}` and returns the body's AABB in **metres** (`part_design_runtime_serializer.cpp:956-990`). | Prove live (Phase 2) |
-| Volume | **Not returned** by the V1 part measure. The proto3 default is 0, so a 0 or missing volume means *unsupported*, never a value. | Decision D3 |
+| Volume | **Not returned** by the V1 part measure. The proto3 default is 0, so a 0 or missing volume means *unsupported*, never a value. | D3: measured from the mesh only if the mesh passes topology checks (§9). A dimension-based volume is always labelled *derived*. |
 | Sketch solve status, committed sketch geometry | V1 Sketch-workbench commands through `app_model_req` with a workshop header (`zplugin_v1/sketch/workbench/sketch_workbench.cpp:42-60`). That path can request saves and history (`zplugin_v1/modeling_systems/src/model_update_system.cpp:425-510`). | **Unsupported** until a live run shows the undo history unchanged |
 
 ## 6. Failure, timeouts, partial changes
 
-- **Unconfirmed feature fails:** send Cancel(4), the UI's own rollback, then take a snapshot to prove nothing was left behind.
+- **Unconfirmed feature fails:** Cancel(4) is the UI's own action, but **it isn't assumed to roll back**.
+  - Its effect is first observed in Phase 1 on a disposable document, by comparing the feature graph before and after a human cancel.
+  - Until that proves cleanup, any failure stops the run and reports the partial state from snapshot evidence. The executor never sends Cancel as a recovery step.
 - **Run fails after committed steps** (for example, the sketch exists but the extrude failed): report the partial state with snapshot evidence. Repair stays "revised plan rebuilt into a different, approved document" (`server/src/executor.ts` `rebuild`). Deleting our own features is decision D4.
 - **Timeout:** the request may still run on the project thread. The outcome is UNKNOWN: stop, take a snapshot, report. Never retry.
 - **Every reply is untrusted.** A build counts as successful only on snapshot plus query evidence (existing executor rule).
@@ -97,12 +110,51 @@ Costs:
 | Phase | Work | Live interaction | Gate |
 |---|---|---|---|
 | 0 | This document; mark the superseded sections | none | done here |
-| 1 | **Passive capture.** The human builds the plate in the harness Chrome. `ai-cad` records WebSocket frames through CDP (`Network.webSocketFrameSent/Received`) and decodes them with protobufjs using Ivy's `.proto` files, read in place. Output: `docs/session-protocol-capture.md` with the exact sketch, extrude, response and notification sequence, header and workshop fields, and the active document id. | Observe only | Human does the UI work |
+| 1 | **Protocol discovery, watch-only.** Procedure in §7.1. Output: `docs/session-protocol-capture.md`. | Observe only; `ai-cad` sends nothing | Your go-ahead, then you do the UI work |
 | 2 | **Read-only port.** Capability probe; PARAM and MEASURE queries on the Task 0 part; `zcad_get_undo_history` must be identical before and after. Record measured values. | Read requests | Approval to send reads |
 | 3 | **Write port with a mock.** Sketch/extrude replaying the captured shapes, allow-list, identity re-check, Cancel on failure, UNKNOWN on timeout. Unit tests against a mock socket in `server/test`. | none | — |
 | 4 | **Review:** execution path, failure behaviour, identity checks, verification | none | Explicit approval |
 | 5 | **First live plate build** on the approved target (§8) | Writes | Per-build approval |
 | 6 | Natural-language request → `designer.ts` plan → build → verify → present. Then image references, edits to existing designs, brackets, Toolbox standard parts, assemblies. | Writes | Per-build approval until safeguards are proven |
+
+**The first milestone is narrow:** `ai-cad` safely reproduces one sketch-and-extrude workflow it has watched in unmodified Ivy, and verifies the result. Autonomous design (phase 6) starts only after that.
+
+**Acceptance strength, in order:** feature graph + bounding box first. Mesh volume is added only once D3's checks pass. A missing measurement is reported as missing.
+
+### 7.1 Phase 1 procedure (watch-only)
+
+**Recorder** (`server/scripts/capture.ts`, new):
+- Attaches a CDP session to the harness Chrome page that's already open.
+- **Records only.** No `page.evaluate`, no request, no click.
+- For every WebSocket frame it appends `{t, direction, opcode, base64}` to `runs/capture-<label>/frames.jsonl`.
+- It takes inspector snapshots (the existing probe) when the human marks the start and end of each step.
+
+**Decoder** (`server/scripts/decode-capture.ts`, offline, on saved files):
+- **Sent frames** are plain `IvyPkg` (`ProtoSocketService.ts:476-484`).
+- **Received frames:**
+  - Strip the trace-header prefix (`getBinaryFramePayload`).
+  - Reassemble chunks; a chunk under 512 KB ends a message (`ProtoSocketService.ts:66, 700-735`).
+  - Decompress with Node's built-in zstd.
+  - Keep raw tessellation frames (`DocumentTessellationProtocol.ts:617`) aside for D3.
+- Decoding uses `protobufjs` (the one new dependency) with Ivy's `.proto` files, which are read in place and never copied or edited.
+
+**Your steps** (in a disposable project and part; each step is bracketed by start/end marks):
+1. Open the empty part and stay idle (baseline: heartbeats and background traffic).
+2. Draw a rectangle sketch on XY, 100 × 60, and exit the sketch.
+3. Extrude 8 mm and confirm.
+4. Start a second extrude, change its depth once, then **Cancel**. This is the cancel-rollback evidence.
+5. Attempt a failing operation (depth 0 or no selection). This shows the failure reply.
+6. Do nothing for 30 s, then close the editor tab.
+
+**Output (`docs/session-protocol-capture.md`) for each step:**
+- The exact request/response/notification sequence.
+- Required fields and how they relate across messages: `workshop_head`, `feature_id`, `feature_class_id`/source, `attrRole` items and units.
+- Result codes and failure replies.
+- Where the active document id and tip feature appear.
+- Undo-history and graph differences, including **what Cancel left behind**.
+- What the tessellation frames contain (mesh, topology, units).
+
+**Exit:** you review the capture and this plan before authorizing Phase 2.
 
 **Impact on existing code:**
 - Keep `inspector.ts`, `snapshot.ts`, `checks.ts`, `store.ts` and `designer.ts`.
@@ -119,13 +171,15 @@ On the approved target, build a 100 × 60 mm rectangle sketch on XY and an 8 mm 
 - Volume: as decided in D3. The expected 4.8e-5 m³ (48000 mm³) stays a hypothesis.
 - Undo history gains the expected entries only. The browser shows the part without a reload.
 
-## 9. Decisions needed
+## 9. Decisions (recorded 2026-10-13)
 
-- **D1 Transport:** 2a, the browser session (recommended), or 2b, our own client holding the user's credentials.
-- **D2** Is driving mda's existing `__mda_ivySocketService__` global acceptable as an "existing interface"? It's an internal mda contract, not a published API.
-- **D3 Volume:** (a) compute it from the tessellation the page already receives (exact for planar faces; still to investigate); (b) derive it from measured parameters and label it *derived*; (c) AABB only.
-- **D4 Partial failure:** report and rebuild elsewhere only (current rule), or also delete the run's own features with approval.
-- **D5 Rebuild destination:** the human creates the document in the UI, or we investigate a programmatic path. That path isn't investigated, so until then the human creates it. Never a new project.
+| | Decision | Consequence |
+|---|---|---|
+| D1 | **Transport via the open editor page (2a).** | No credentials in `ai-cad`. |
+| D2 | **The `__mda_ivySocketService__` hook is accepted conditionally.** It's an existing runtime interface but not a stable API. | Startup probe; fail closed if its behaviour changes. Only allow-listed, validated request types (§3). |
+| D3 | **Volume from the mesh, only if reliable.** | The mesh must be closed and manifold with consistent orientation before volume is computed. Otherwise report the bounding box only, and label any computed volume *derived*. Never substitute 0, and never present a derived value as measured. |
+| D4 | **Report first. Clean up only with explicit approval.** | No automatic deletes or Cancel-as-rollback while ownership or rollback safety is uncertain. |
+| D5 | **The human creates rebuild documents** for now. | Document lifecycle stays outside the first implementation. Never a new project. |
 
 ## 10. Gaps the boundary leaves open
 
