@@ -139,7 +139,7 @@ Date: 2026-10-13 · Approved as 2a only · `runs/capture-measure1` (gitignored) 
 
 This confirms re-plan §4: identity must be re-resolved after every reopen, and a number seen earlier may now name a different object.
 
-**What the measure tool sent: not `IVY_QUERY_MEASURE_REQ`.**
+**What the measure tool sent with record-as-feature on: not `IVY_QUERY_MEASURE_REQ`.**
 - The tool is a **measurement feature** in the measurement workbench (`workbenchType 14`, `ivymeasurement.MeasurementPkg`). It uses the same preview → commit pattern as the extrude:
 
 | Record | Request | workshopHead | Reply |
@@ -154,14 +154,14 @@ This confirms re-plan §4: identity must be re-resolved after every reopen, and 
   - `30007` = `[6, 3]`, `30009` = `[1, 2]`, both unexplained.
   - 0.32 first appears in the **server's** preview notification (record 278), so the values are server-computed.
 - **Interpretation (a hypothesis):** 0.32 m is the perimeter and 0.006 m² the area of a 100 × 60 mm face. In the commit, 320 matches mm, but "6" doesn't match mm² (6000). The display-unit encoding is unknown.
-- **The UI measurement is a model write.** The probe diff added `ivy::Measurement` "Measure1", an `ivy::MeasurementSet` and a `FeatGeomBRep`. Undo went 1 → 2 steps, and Ivy sent 3 version-control change notifications. The disposable document now contains this measurement.
+- **This run persisted the measurement, because "record as feature" was enabled** (the human's setting; role `30008` = `kMeasureInsertToSet` was `true` in all three requests, `zplugin_v1/measurement/model/inc/measurement_role.h:23`). The probe diff added `ivy::Measurement` "Measure1", an `ivy::MeasurementSet` and a `FeatGeomBRep`. Undo went 1 → 2 steps, and Ivy sent 3 version-control change notifications. **This shows the record workflow writes; it does not show that measuring itself writes.** The other roles: `30004` result active, `30005` result values, `30007` result refs, `30009` result-set ids (same header).
 
 **Decoder fix:**
 - Nested `model_pkg` bytes are now decoded by their declared `workbenchType`: 1, 2, 13 → `PartPkg`; 14 → `MeasurementPkg`. Any other workbench is reported in `summary.nestedUndecoded` instead of being guessed.
 - Before this fix, the measurement messages decoded "successfully" as `PartPkg` and read as `IVY_PART_DELETE_RSP`. That was a silent mis-decode, now covered by tests on the measure1 bytes.
 
-**Consequence for Phase 2b (rule from §7.2 applied):**
-- No read-only measure request was observed, so **the measure query stays out of 2b and AABB stays unsupported**.
-- The measurement the UI offers is a feature write. Even its preview requests are model requests (`IVY_APP_MODEL_REQ`), which 2b's allow-list excludes.
-- The server-computed perimeter and area of one face would need such preview requests. Using them is a separate decision, not part of the approved scope.
-- 2b can still run the **parameter query** exactly as the UI sends it (§3 item 4), with the undo and graph checks. It cannot establish geometry.
+**Consequence for Phase 2b (corrected 2026-10-13):**
+- **Read-only native measurement is _unverified_, not unsupported.** Only the record-as-feature workflow was captured. Whether measuring with recording off sends only preview requests (like the cancelled extrude, which left no undo or version-control trace) or something else is not known.
+- Next experiment (needs its own approval, watch-only like 2a): repeat the measurement with **record as feature disabled**, capture the outgoing requests, and compare the tree, undo history and version-control notifications before and after.
+- Until then, no measure request of any kind is in 2b, and nothing guessed is replayed. Even a preview-only measurement path would consist of model requests (`IVY_APP_MODEL_REQ`, workbench 14), so adding it to the allow-list would be a separate decision after the capture.
+- 2b can still run the **parameter query** exactly as the UI sends it (§3 item 4), with the undo and graph checks. It cannot establish geometry by itself.
