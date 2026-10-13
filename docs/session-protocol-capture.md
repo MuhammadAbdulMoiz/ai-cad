@@ -126,3 +126,42 @@ Notes:
 - The meaning of constraint `third: "-2000"`, and which of the 32 extrude roles are required and which are UI defaults. Answering this requires a write experiment (Phase 3+, approval needed).
 - Framing branches not exercised: trace header, multi-chunk, `IVYDOC01`. The decoder implements them from the mda source, but they're unverified on bytes.
 - Whether `ParmLength` values are in display units or a fixed unit. Phase 2 should compare a parameter query against a measured AABB.
+
+## 5. Phase 2a: watch-only measurement capture (`measure1`)
+
+Date: 2026-10-13 · Approved as 2a only · `runs/capture-measure1` (gitignored) · probes `measure1-before`/`measure1-after`. `ai-cad` sent no request; the human used Ivy's measure tool once on `Extrude1`.
+
+**After reopening plate1, every runtime handle changed:**
+- The part is now **557** (`ivy::PartReference`); it was 540.
+- **540 is now the `SolidExtrude` object.**
+- The undo history was reset by the reload (1 step, 2 marks), and the failed commit's mark #22 is gone.
+- The model socket opened three times during the load (records 102, 110, 231).
+
+This confirms re-plan §4: identity must be re-resolved after every reopen, and a number seen earlier may now name a different object.
+
+**What the measure tool sent: not `IVY_QUERY_MEASURE_REQ`.**
+- The tool is a **measurement feature** in the measurement workbench (`workbenchType 14`, `ivymeasurement.MeasurementPkg`). It uses the same preview → commit pattern as the extrude:
+
+| Record | Request | workshopHead | Reply |
+|---|---|---|---|
+| 276 | `IVY_MEASUREMENT_UPDATE_REQ`, `{action: Create}` | preview / ignoreMark / doNotSave | feature 1 (preview) |
+| 280 | `Modify` (−1) | preview | — |
+| 283 | `Modify` (−3), **non-preview** | all false | **`featureId 52`, `ivy::Measurement` "Measure1"** |
+
+- The innermost payload is an `ivytaskpanel.UpdateMessageReq`:
+  - `30003` = the target: feature 43, `TopoFace` id 4.
+  - `30005` = values: **`[0.32, 0.006]` in the preview, `[320, 6]` in the commit**.
+  - `30007` = `[6, 3]`, `30009` = `[1, 2]`, both unexplained.
+  - 0.32 first appears in the **server's** preview notification (record 278), so the values are server-computed.
+- **Interpretation (a hypothesis):** 0.32 m is the perimeter and 0.006 m² the area of a 100 × 60 mm face. In the commit, 320 matches mm, but "6" doesn't match mm² (6000). The display-unit encoding is unknown.
+- **The UI measurement is a model write.** The probe diff added `ivy::Measurement` "Measure1", an `ivy::MeasurementSet` and a `FeatGeomBRep`. Undo went 1 → 2 steps, and Ivy sent 3 version-control change notifications. The disposable document now contains this measurement.
+
+**Decoder fix:**
+- Nested `model_pkg` bytes are now decoded by their declared `workbenchType`: 1, 2, 13 → `PartPkg`; 14 → `MeasurementPkg`. Any other workbench is reported in `summary.nestedUndecoded` instead of being guessed.
+- Before this fix, the measurement messages decoded "successfully" as `PartPkg` and read as `IVY_PART_DELETE_RSP`. That was a silent mis-decode, now covered by tests on the measure1 bytes.
+
+**Consequence for Phase 2b (rule from §7.2 applied):**
+- No read-only measure request was observed, so **the measure query stays out of 2b and AABB stays unsupported**.
+- The measurement the UI offers is a feature write. Even its preview requests are model requests (`IVY_APP_MODEL_REQ`), which 2b's allow-list excludes.
+- The server-computed perimeter and area of one face would need such preview requests. Using them is a separate decision, not part of the approved scope.
+- 2b can still run the **parameter query** exactly as the UI sends it (§3 item 4), with the undo and graph checks. It cannot establish geometry.

@@ -78,8 +78,38 @@ describe.skipIf(!fs.existsSync(ivyRepo) || !fs.existsSync(captureFile))('decodeC
     const [d] = decodeCapture([{ ...f, payload: Buffer.concat([Buffer.from(f.payload, 'base64'), Buffer.from([0])]).toString('base64') }], schema);
     expect((d as any).error).toMatch(/^zstd: zstd frame: 1 trailing bytes/);
   });
+  it('decodes nested part payloads only for part workbenches, leaving none undecoded', () => {
+    expect(summarize(decoded).nestedUndecoded).toEqual([]);
+    expect((at(113).pkg as any).appModelReq.modelPkgType).toBe('PartPkg');
+  });
+
   it('rejects a mesh frame whose length disagrees with its header', () => {
     const [d] = decodeCapture([cut(140, 1)], schema);
     expect(d).toMatchObject({ kind: 'mesh', ok: false });
+  });
+});
+
+const measureFile = path.join(config.runsDir, 'capture-measure1', 'frames.jsonl');
+
+describe.skipIf(!fs.existsSync(ivyRepo) || !fs.existsSync(measureFile))('decodeCapture on the measure1 capture', () => {
+  const records: CaptureRecord[] = fs.existsSync(measureFile)
+    ? fs.readFileSync(measureFile, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
+  const decoded = records.length ? decodeCapture(records, loadSchema(ivyRepo)) : [];
+  const at = (frame: number) => decoded.find((d) => d.frames[0] === frame) as Extract<Decoded, { kind: 'message' }>;
+
+  it('decodes every message and nested payload', () => {
+    const s = summarize(decoded);
+    expect(s.undecoded).toEqual([]);
+    expect(s.nestedUndecoded).toEqual([]);
+    expect(s.asyncIds.unanswered).toEqual([]);
+  });
+
+  // Decoded as PartPkg these read as IVY_PART_DELETE_RSP; the workbench (14) selects the measurement schema.
+  it('decodes the UI measure tool as measurement-workbench feature updates, not part packages', () => {
+    const req = (at(283).pkg as any).appModelReq;
+    expect(req.workshopHead.workbenchType).toBe(14);
+    expect(req.modelPkgType).toBe('MeasurementPkg');
+    expect(req.modelPkgDecoded.header).toMatchObject({ cmd: 'IVY_MEASUREMENT_UPDATE_REQ', isPreview: false, featureName: 'Measure1', featureType: 'ivy::Measurement' });
+    expect((at(285).pkg as any).appModelRsp.modelPkgDecoded.header).toMatchObject({ cmd: 'IVY_MEASUREMENT_UPDATE_RSP', featureId: '52' });
   });
 });

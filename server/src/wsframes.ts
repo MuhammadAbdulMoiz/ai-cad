@@ -31,34 +31,46 @@ export type Decoded =
 
 const INCLUDE_DIRS = ['ivyproto/proto', 'ivyproto/commonProto', 'sdk/commonproto/proto'];
 
-export type Schema = { IvyPkg: protobuf.Type; PartPkg?: protobuf.Type };
+export type Schema = { IvyPkg: protobuf.Type; PartPkg?: protobuf.Type; MeasurementPkg?: protobuf.Type };
+
+// model_pkg is typed by its workbench (ivyproto.proto:1224 "Required; for unpack model_pkg"; ivydata.proto:250-271).
+// Workbenches without a schema here stay undecoded; guessing a type mis-decodes them (seen on measure1).
+const WORKBENCH_PKG: Record<number, keyof Schema> = { 1: 'PartPkg', 2: 'PartPkg', 13: 'PartPkg', 14: 'MeasurementPkg' };
+const MEASUREMENT_PROTO = 'zplugin_v1/measurement/proto';
 
 export function loadSchema(ivyRepo: string): Schema {
-  const dirs = INCLUDE_DIRS.map((d) => path.join(ivyRepo, d));
+  const dirs = [...INCLUDE_DIRS, MEASUREMENT_PROTO].map((d) => path.join(ivyRepo, d));
   const root = new protobuf.Root();
   root.resolvePath = (_origin, target) => {
     if (path.isAbsolute(target) && fs.existsSync(target)) return target;
     for (const d of dirs) { const p = path.join(d, path.basename(target)); if (fs.existsSync(p)) return p; }
     return target;
   };
-  root.loadSync(['ivyproto.proto', 'ivypart.proto'], { keepCase: false });
+  root.loadSync(['ivyproto.proto', 'ivypart.proto', 'ivymeasurement.proto'], { keepCase: false });
   root.resolveAll();
-  return { IvyPkg: root.lookupType('ivyproto.IvyPkg'), PartPkg: root.lookupType('ivypart.PartPkg') };
+  return {
+    IvyPkg: root.lookupType('ivyproto.IvyPkg'),
+    PartPkg: root.lookupType('ivypart.PartPkg'),
+    MeasurementPkg: root.lookupType('ivymeasurement.MeasurementPkg'),
+  };
 }
 
 const TO_OBJECT: protobuf.IConversionOptions = { longs: String, enums: String, bytes: String, defaults: false, oneofs: true };
 
-/** Decodes nested PartPkg payloads where the outer message carries them as bytes; failures are recorded, not hidden. */
+/** Decodes nested model payloads by their declared workbench; unknown workbenches and failures are recorded, not hidden. */
 function decodeNested(schema: Schema, msg: any, obj: any) {
-  if (!schema.PartPkg) return;
-  const tryPart = (bytes: unknown, into: any) => {
+  const tryModel = (bytes: unknown, workbench: unknown, into: any) => {
     if (!(bytes instanceof Uint8Array) || !bytes.length || !into) return;
-    try { into.modelPkgDecoded = schema.PartPkg!.toObject(schema.PartPkg!.decode(bytes), TO_OBJECT); }
+    const key = WORKBENCH_PKG[Number(workbench)];
+    const type = key ? (schema[key] as protobuf.Type | undefined) : undefined;
+    into.modelPkgType = key ?? null;
+    if (!type) { into.modelPkgDecodeError = `no schema for workbench ${String(workbench)}`; return; }
+    try { into.modelPkgDecoded = type.toObject(type.decode(bytes), TO_OBJECT); }
     catch (e) { into.modelPkgDecodeError = (e as Error).message; }
   };
-  tryPart(msg.appModelReq?.modelPkg, obj.appModelReq);
-  tryPart(msg.appModelRsp?.modelPkg, obj.appModelRsp);
-  (msg.appModelNtf?.modelDescs ?? []).forEach((d: any, i: number) => tryPart(d?.modelPkg, obj.appModelNtf?.modelDescs?.[i]));
+  tryModel(msg.appModelReq?.modelPkg, msg.appModelReq?.workshopHead?.workbenchType, obj.appModelReq);
+  tryModel(msg.appModelRsp?.modelPkg, msg.appModelRsp?.workshopHead?.workbenchType, obj.appModelRsp);
+  (msg.appModelNtf?.modelDescs ?? []).forEach((d: any, i: number) => tryModel(d?.modelPkg, d?.workbenchType, obj.appModelNtf?.modelDescs?.[i]));
 }
 
 function decodePkg(schema: Schema, bytes: Uint8Array): { cmd?: string; asyncId?: string; pkg: unknown } {
@@ -205,5 +217,10 @@ export function summarize(items: Decoded[]) {
     mesh: count(items.filter((x): x is Extract<Decoded, { kind: 'mesh' }> => x.kind === 'mesh').map((m) => (m.ok ? 'ok' : 'invalid'))),
     asyncIds: { requests: sentIds.size, answered: [...sentIds].filter((id) => recvIds.has(id)).length, unanswered: [...sentIds].filter((id) => !recvIds.has(id)), unsolicited: [...recvIds].filter((id) => !sentIds.has(id)) },
     undecoded: msgs.filter((m) => m.status === 'undecoded').map((m) => ({ dir: m.dir, frames: m.frames, wireBytes: m.wireBytes, error: m.error })),
+    nestedUndecoded: msgs.flatMap((m) => {
+      const p: any = m.pkg ?? {};
+      const parts = [p.appModelReq, p.appModelRsp, ...(p.appModelNtf?.modelDescs ?? [])].filter((x) => x?.modelPkgDecodeError);
+      return parts.map((x) => ({ dir: m.dir, frames: m.frames, error: x.modelPkgDecodeError }));
+    }),
   };
 }
