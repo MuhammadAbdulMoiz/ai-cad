@@ -1,0 +1,4 @@
+{
+  "source": "runs/plate-trial-write3 (first fully verified live plate, 2026-10-14; the run directory is the baseline and stays untouched): decoded data notification 96 without its header, the plan, the final document state, the guard report and the read-only evidence",
+  "projectId": 37660626, "docId": 527, "sketchId": 18, "extrudeId": 46
+}

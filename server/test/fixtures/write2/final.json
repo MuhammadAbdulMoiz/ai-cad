@@ -1,0 +1,16 @@
+{
+  "verified": false,
+  "problems": [
+    "state changed after sketchCreate: undo history changed (undo 2→3, redo 0→0, marks 1,2,3→1,2,3,4)",
+    "state changed after sketchCreate: object ivy::FeatSketch #549 changed",
+    "state changed after sketchCreate: object ivy::VisuGeomObject #554 removed",
+    "state changed after sketchCreate: object ivy::VisuGeomObject #555 removed",
+    "state changed after sketchCreate: new object ivy::VisuGeomObject #558",
+    "state changed after sketchCreate: new object ivy::VisuGeomObject #559",
+    "state changed after sketchCreate: edge removed: \"530\" -> \"554\" [label=\"Contain\", color=\"#87CEEB\"];",
+    "state changed after sketchCreate: edge removed: \"530\" -> \"555\" [label=\"Contain\", color=\"#87CEEB\"];",
+    "state changed after sketchCreate: edge added: \"530\" -> \"558\" [label=\"Contain\", color=\"#87CEEB\"];",
+    "state changed after sketchCreate: edge added: \"530\" -> \"559\" [label=\"Contain\", color=\"#87CEEB\"];"
+  ],
+  "records": 1
+}

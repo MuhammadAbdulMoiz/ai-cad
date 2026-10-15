@@ -1,0 +1,631 @@
+{
+  "completed": [
+    "sketchCreate",
+    "sketchDraw",
+    "sketchClose",
+    "widthAdd",
+    "heightAdd",
+    "sketchFinish",
+    "extrudeCreate",
+    "extrudeModify",
+    "extrudeCommit"
+  ],
+  "steps": [
+    {
+      "step": "sketchCreate",
+      "sent": true,
+      "outcome": "verified",
+      "problems": [],
+      "undoBefore": {
+        "canUndo": 1,
+        "canRedo": 0,
+        "markNum": 2,
+        "markIds": [
+          1,
+          2
+        ]
+      },
+      "pageAsyncId": "193457812480010200",
+      "undoAfter": {
+        "canUndo": 2,
+        "canRedo": 0,
+        "markNum": 3,
+        "markIds": [
+          1,
+          2,
+          3
+        ]
+      },
+      "changes": {
+        "added": [
+          {
+            "h": "545",
+            "cls": "ivy::FeatSketch"
+          },
+          {
+            "h": "546",
+            "cls": "ivy::ParmBool"
+          },
+          {
+            "h": "547",
+            "cls": "ivy::FeatSupportPositioned"
+          }
+        ],
+        "removed": [],
+        "modified": [
+          {
+            "h": "529",
+            "cls": "ivy::FeatContainer",
+            "paths": [
+              "_lastId",
+              "class_name_id_map_"
+            ]
+          },
+          {
+            "h": "537",
+            "cls": "ivy::FeatPart",
+            "paths": [
+              "attr_tip_feat_"
+            ]
+          }
+        ]
+      },
+      "wireAsyncId": "193457812480010208"
+    },
+    {
+      "step": "sketchDraw",
+      "sent": true,
+      "outcome": "verified",
+      "problems": [],
+      "undoBefore": {
+        "canUndo": 2,
+        "canRedo": 0,
+        "markNum": 3,
+        "markIds": [
+          1,
+          2,
+          3
+        ]
+      },
+      "pageAsyncId": "193457812480011100",
+      "undoAfter": {
+        "canUndo": 3,
+        "canRedo": 0,
+        "markNum": 4,
+        "markIds": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "changes": {
+        "added": [],
+        "removed": [],
+        "modified": [
+          {
+            "h": "545",
+            "cls": "ivy::FeatSketch",
+            "paths": [
+              "attr_first_._featOptions"
+            ]
+          }
+        ]
+      },
+      "wireAsyncId": "193457812480011104"
+    },
+    {
+      "step": "sketchClose",
+      "sent": true,
+      "outcome": "verified",
+      "problems": [],
+      "undoBefore": {
+        "canUndo": 3,
+        "canRedo": 0,
+        "markNum": 4,
+        "markIds": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "pageAsyncId": "193457812480012160",
+      "undoAfter": {
+        "canUndo": 4,
+        "canRedo": 0,
+        "markNum": 5,
+        "markIds": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "changes": {
+        "added": [],
+        "removed": [],
+        "modified": [
+          {
+            "h": "545",
+            "cls": "ivy::FeatSketch",
+            "paths": [
+              "attr_first_._featOptions"
+            ]
+          }
+        ]
+      },
+      "wireAsyncId": "193457812480012160"
+    },
+    {
+      "step": "widthAdd",
+      "sent": true,
+      "outcome": "verified",
+      "problems": [],
+      "undoBefore": {
+        "canUndo": 4,
+        "canRedo": 0,
+        "markNum": 5,
+        "markIds": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "pageAsyncId": "193457812480013280",
+      "undoAfter": {
+        "canUndo": 5,
+        "canRedo": 0,
+        "markNum": 6,
+        "markIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "changes": {
+        "added": [
+          {
+            "h": "554",
+            "cls": "ivy::SketchLengthDimension"
+          },
+          {
+            "h": "556",
+            "cls": "ivy::ParmLength"
+          }
+        ],
+        "removed": [],
+        "modified": [
+          {
+            "h": "529",
+            "cls": "ivy::FeatContainer",
+            "paths": [
+              "_lastId",
+              "class_name_id_map_"
+            ]
+          },
+          {
+            "h": "545",
+            "cls": "ivy::FeatSketch",
+            "paths": [
+              "attr_first_._featOptions"
+            ]
+          }
+        ]
+      },
+      "wireAsyncId": "193457812480013280"
+    },
+    {
+      "step": "heightAdd",
+      "sent": true,
+      "outcome": "verified",
+      "problems": [],
+      "undoBefore": {
+        "canUndo": 5,
+        "canRedo": 0,
+        "markNum": 6,
+        "markIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "pageAsyncId": "193457812480014400",
+      "undoAfter": {
+        "canUndo": 6,
+        "canRedo": 0,
+        "markNum": 7,
+        "markIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      "changes": {
+        "added": [
+          {
+            "h": "559",
+            "cls": "ivy::SketchLengthDimension"
+          },
+          {
+            "h": "561",
+            "cls": "ivy::ParmLength"
+          }
+        ],
+        "removed": [],
+        "modified": [
+          {
+            "h": "529",
+            "cls": "ivy::FeatContainer",
+            "paths": [
+              "_lastId",
+              "class_name_id_map_"
+            ]
+          }
+        ]
+      },
+      "wireAsyncId": "193457812480014400"
+    },
+    {
+      "step": "sketchFinish",
+      "sent": true,
+      "outcome": "verified",
+      "problems": [],
+      "undoBefore": {
+        "canUndo": 6,
+        "canRedo": 0,
+        "markNum": 7,
+        "markIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      "pageAsyncId": "193457812480015840",
+      "undoAfter": {
+        "canUndo": 7,
+        "canRedo": 0,
+        "markNum": 8,
+        "markIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "changes": {
+        "added": [],
+        "removed": [],
+        "modified": [
+          {
+            "h": "545",
+            "cls": "ivy::FeatSketch",
+            "paths": [
+              "attr_first_._featOptions"
+            ]
+          }
+        ]
+      },
+      "wireAsyncId": "193457812480015840"
+    },
+    {
+      "step": "extrudeCreate",
+      "sent": true,
+      "outcome": "verified",
+      "problems": [],
+      "undoBefore": {
+        "canUndo": 7,
+        "canRedo": 0,
+        "markNum": 8,
+        "markIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "pageAsyncId": "193457812480016830",
+      "undoAfter": {
+        "canUndo": 7,
+        "canRedo": 0,
+        "markNum": 8,
+        "markIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "changes": {
+        "added": [],
+        "removed": [],
+        "modified": [
+          {
+            "h": "529",
+            "cls": "ivy::FeatContainer",
+            "paths": [
+              "_lastId",
+              "class_name_id_map_"
+            ]
+          },
+          {
+            "h": "532",
+            "cls": "ivy::TopoContainer",
+            "paths": [
+              "_lastId"
+            ]
+          }
+        ]
+      },
+      "wireAsyncId": "193457812480016832"
+    },
+    {
+      "step": "extrudeModify",
+      "sent": true,
+      "outcome": "verified",
+      "problems": [],
+      "undoBefore": {
+        "canUndo": 7,
+        "canRedo": 0,
+        "markNum": 8,
+        "markIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "pageAsyncId": "193457812480017800",
+      "undoAfter": {
+        "canUndo": 7,
+        "canRedo": 0,
+        "markNum": 8,
+        "markIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "changes": {
+        "added": [],
+        "removed": [],
+        "modified": [
+          {
+            "h": "529",
+            "cls": "ivy::FeatContainer",
+            "paths": [
+              "_lastId",
+              "class_name_id_map_"
+            ]
+          },
+          {
+            "h": "532",
+            "cls": "ivy::TopoContainer",
+            "paths": [
+              "_lastId"
+            ]
+          }
+        ]
+      },
+      "wireAsyncId": "193457812480017792"
+    },
+    {
+      "step": "extrudeCommit",
+      "sent": true,
+      "outcome": "verified",
+      "problems": [],
+      "undoBefore": {
+        "canUndo": 7,
+        "canRedo": 0,
+        "markNum": 8,
+        "markIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "pageAsyncId": "193457812480018800",
+      "undoAfter": {
+        "canUndo": 8,
+        "canRedo": 0,
+        "markNum": 9,
+        "markIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          11
+        ]
+      },
+      "changes": {
+        "added": [
+          {
+            "h": "602",
+            "cls": "ivy::SolidExtrude"
+          },
+          {
+            "h": "603",
+            "cls": "ivy::ParmBool"
+          },
+          {
+            "h": "604",
+            "cls": "ivy::ParmLength"
+          },
+          {
+            "h": "605",
+            "cls": "ivy::ParmLength"
+          },
+          {
+            "h": "606",
+            "cls": "ivy::ParmLength"
+          },
+          {
+            "h": "607",
+            "cls": "ivy::ParmLength"
+          },
+          {
+            "h": "608",
+            "cls": "ivy::ParmLength"
+          },
+          {
+            "h": "609",
+            "cls": "ivy::ParmAngle"
+          },
+          {
+            "h": "610",
+            "cls": "ivy::ParmAngle"
+          },
+          {
+            "h": "611",
+            "cls": "ivy::FeatGeomBRep"
+          },
+          {
+            "h": "612",
+            "cls": "ivy::ParmLength"
+          },
+          {
+            "h": "613",
+            "cls": "ivy::ParmLength"
+          },
+          {
+            "h": "614",
+            "cls": "ivy::ParmAngle"
+          },
+          {
+            "h": "615",
+            "cls": "ivy::ParmLength"
+          },
+          {
+            "h": "616",
+            "cls": "ivy::ParmAngle"
+          },
+          {
+            "h": "617",
+            "cls": "ivy::ParmLength"
+          },
+          {
+            "h": "618",
+            "cls": "ivy::ParmLength"
+          },
+          {
+            "h": "619",
+            "cls": "ivy::TopoGroup"
+          },
+          {
+            "h": "620",
+            "cls": "ivy::StableHub"
+          }
+        ],
+        "removed": [],
+        "modified": [
+          {
+            "h": "529",
+            "cls": "ivy::FeatContainer",
+            "paths": [
+              "_lastId",
+              "class_name_id_map_"
+            ]
+          },
+          {
+            "h": "532",
+            "cls": "ivy::TopoContainer",
+            "paths": [
+              "_lastId"
+            ]
+          },
+          {
+            "h": "537",
+            "cls": "ivy::FeatPart",
+            "paths": [
+              "attr_tip_feat_"
+            ]
+          },
+          {
+            "h": "545",
+            "cls": "ivy::FeatSketch",
+            "paths": [
+              "attr_first_._featOptions"
+            ]
+          }
+        ]
+      },
+      "wireAsyncId": "193457812480018816"
+    }
+  ],
+  "lastState": {
+    "undo": {
+      "canUndo": 8,
+      "canRedo": 0,
+      "markNum": 9,
+      "markIds": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        11
+      ]
+    },
+    "objects": 44,
+    "verified": false
+  },
+  "final": {
+    "verified": true,
+    "problems": [],
+    "records": 1
+  },
+  "exclusivity": [
+    "attested"
+  ],
+  "possibleHiddenResidue": false
+}

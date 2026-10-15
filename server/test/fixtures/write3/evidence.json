@@ -1,0 +1,161 @@
+{
+  "problems": [],
+  "params": [
+    {
+      "featId": "4",
+      "fullName": "\\Default Geometry\\XY Plane\\Deactivated",
+      "value": "0",
+      "type": "tBool"
+    },
+    {
+      "featId": "6",
+      "fullName": "\\Default Geometry\\YZ Plane\\Deactivated",
+      "value": "0",
+      "type": "tBool"
+    },
+    {
+      "featId": "8",
+      "fullName": "\\Default Geometry\\ZX Plane\\Deactivated",
+      "value": "0",
+      "type": "tBool"
+    },
+    {
+      "featId": "19",
+      "fullName": "\\Part Body\\Sketch1\\Deactivated",
+      "value": "0",
+      "type": "tBool"
+    },
+    {
+      "featId": "47",
+      "fullName": "\\Part Body\\Extrude1\\Deactivated",
+      "value": "0",
+      "formula": "0",
+      "type": "tBool"
+    },
+    {
+      "featId": "48",
+      "fullName": "\\Part Body\\Extrude1\\ThickenLength_0",
+      "value": "1.000000",
+      "formula": "1",
+      "type": "tLength",
+      "unit": "m"
+    },
+    {
+      "featId": "49",
+      "fullName": "\\Part Body\\Extrude1\\ThickenLength_1",
+      "value": "1.000000",
+      "formula": "1",
+      "type": "tLength",
+      "unit": "m"
+    },
+    {
+      "featId": "50",
+      "fullName": "\\Part Body\\Extrude1\\Depth",
+      "value": "10.000000",
+      "type": "tLength",
+      "unit": "m"
+    },
+    {
+      "featId": "51",
+      "fullName": "\\Part Body\\Extrude1\\OffsetFromStartDistance",
+      "value": "10.000000",
+      "type": "tLength",
+      "unit": "m"
+    },
+    {
+      "featId": "52",
+      "fullName": "\\Part Body\\Extrude1\\Direction2Depth",
+      "value": "10.000000",
+      "type": "tLength",
+      "unit": "m"
+    },
+    {
+      "featId": "53",
+      "fullName": "\\Part Body\\Extrude1\\DraftAngle",
+      "value": "1.000000",
+      "type": "tAngle"
+    },
+    {
+      "featId": "54",
+      "fullName": "\\Part Body\\Extrude1\\Draft2Angle",
+      "value": "1.000000",
+      "type": "tAngle"
+    },
+    {
+      "featId": "39",
+      "fullName": "\\Part Body\\Extrude1\\ivy::ParmLength.EN_US13",
+      "value": "8.000000",
+      "formula": "8",
+      "type": "tLength",
+      "unit": "m"
+    },
+    {
+      "featId": "40",
+      "fullName": "\\Part Body\\Extrude1\\ivy::ParmLength.EN_US14",
+      "value": "10.000000",
+      "formula": "10",
+      "type": "tLength",
+      "unit": "m"
+    },
+    {
+      "featId": "41",
+      "fullName": "\\Part Body\\Extrude1\\ivy::ParmAngle.EN_US5",
+      "value": "1.000000",
+      "formula": "1",
+      "type": "tAngle"
+    },
+    {
+      "featId": "42",
+      "fullName": "\\Part Body\\Extrude1\\ivy::ParmLength.EN_US15",
+      "value": "10.000000",
+      "formula": "10",
+      "type": "tLength",
+      "unit": "m"
+    },
+    {
+      "featId": "43",
+      "fullName": "\\Part Body\\Extrude1\\ivy::ParmAngle.EN_US6",
+      "value": "1.000000",
+      "formula": "1",
+      "type": "tAngle"
+    },
+    {
+      "featId": "44",
+      "fullName": "\\Part Body\\Extrude1\\ivy::ParmLength.EN_US16",
+      "value": "1.000000",
+      "type": "tLength",
+      "unit": "m"
+    },
+    {
+      "featId": "45",
+      "fullName": "\\Part Body\\Extrude1\\ivy::ParmLength.EN_US17",
+      "value": "1.000000",
+      "type": "tLength",
+      "unit": "m"
+    },
+    {
+      "featId": "21",
+      "fullName": "\\Part Body\\Sketch1\\ivy::SketchLengthDimension.EN_US1\\length",
+      "value": "100.000000",
+      "type": "tLength",
+      "unit": "m"
+    },
+    {
+      "featId": "23",
+      "fullName": "\\Part Body\\Sketch1\\ivy::SketchLengthDimension.EN_US2\\length",
+      "value": "60.000000",
+      "type": "tLength",
+      "unit": "m"
+    }
+  ],
+  "faces": [
+    {
+      "perimeter": 0.21600000000000003,
+      "area": 0.0008
+    },
+    {
+      "perimeter": 0.32,
+      "area": 0.006
+    }
+  ]
+}

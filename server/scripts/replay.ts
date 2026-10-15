@@ -15,7 +15,9 @@ import { Inspector } from '../src/inspector';
 import { PageCall, type PageResult } from '../src/pagecall';
 import type { Op } from '../src/queryport';
 import { attachRecorder, type CaptureRecord } from '../src/recorder';
-import { checkTraffic, compareState, observedTarget, VOLATILE, type StateSnap } from '../src/replaycheck';
+import { inspectorState } from '../src/liveports';
+import { planFaceMeasure, type MeasurePlan } from '../src/measureplan';
+import { checkTraffic, compareState, observedTarget, type StateSnap } from '../src/replaycheck';
 import { decodeCapture, loadSchema } from '../src/wsframes';
 
 const SETTLE_MS = 3000;
@@ -49,18 +51,7 @@ function finish(verdict: 'passed' | 'failed' | 'unknown', detail: Record<string,
   process.exit(verdict === 'passed' ? 0 : 1);
 }
 
-async function captureState(projectId: number, projectTag: string): Promise<StateSnap> {
-  const dot = await ins.call('zcad_get_object_graph', { projectId, projectTag, rootEntityId: 0 });
-  const classes: Record<string, string> = {};
-  for (const m of dot.matchAll(/^\s*"?(\d+)"?\s*\[label="([^"\s]+)/gm)) classes[m[1]] = m[2];
-  const edges = [...dot.matchAll(/^\s*"\d+" -> "\d+".*$/gm)].map((m) => m[0].trim());
-  const objects: Record<string, string> = {};
-  for (const [h, cls] of Object.entries(classes)) {
-    if (VOLATILE.has(cls) || cls === 'ivy::Project') continue;
-    objects[h] = await ins.call('zcad_get_object_json', { projectId, projectTag, objectId: Number(h) });
-  }
-  return { undo: await ins.call('zcad_get_undo_history', { projectId, projectTag }), classes, objects, edges };
-}
+const captureState = (projectId: number, projectTag: string): Promise<StateSnap> => inspectorState(ins, projectId, projectTag); // unbracketed, as before
 
 /** Identity from the page's own traffic, cross-checked against the page socket and the inspector. Throws on mismatch. */
 async function resolveIdentity() {
@@ -77,11 +68,10 @@ async function resolveIdentity() {
   return { projectId, projectTag, ...obs, docUuid: doc.uuid as string, socketValid: probe.project.valid };
 }
 
-function featureFacts(state: StateSnap, featureId: number) {
-  const part = Object.entries(state.classes).find(([, c]) => c === 'ivy::FeatPart');
-  const tip = part ? /_vValue:\[(\d+)_\d+\]/.exec(JSON.parse(state.objects[part[0]]).attr_tip_feat_ ?? '')?.[1] : undefined;
-  const feat = Object.entries(state.objects).find(([h, j]) => state.classes[h] === 'ivy::SolidExtrude' && JSON.parse(j).attr_first_?._id === featureId);
-  return { tipFeatureId: tip ? Number(tip) : undefined, featureHandle: feat?.[0] };
+/** The measurement, from the page-reported document's own subtree (rootEntityId = its handle). Throws to refuse. */
+async function measurePlan(id: NonNullable<typeof identity>): Promise<MeasurePlan> {
+  const doc = await inspectorState(ins, id.projectId, id.projectTag, { root: id.docId, bracketUndo: true });
+  return planFaceMeasure(doc, id, featureArg!, faceArg!);
 }
 
 /** The latest Ivy model socket the page opened; the page also keeps platform sockets that are not Ivy traffic. */
@@ -90,6 +80,7 @@ function modelSocketId(): string | undefined {
 }
 
 let identity: Awaited<ReturnType<typeof resolveIdentity>> | undefined;
+let shown: MeasurePlan | undefined;
 log(`Attached to ${shortUrl(tab.url)}; recording to ${out}`);
 const probe = await page.probe();
 log(`Page socket: ${JSON.stringify(probe.project ?? probe.error)}`);
@@ -103,6 +94,12 @@ rl.on('line', async (line) => {
     if (cmd === 'ready') {
       identity = await resolveIdentity();
       log(`Target: project ${identity.projectId}/${identity.projectTag}, workshop ${identity.workshopId}, document handle ${identity.docId} (PartReference ${identity.docUuid}), parmSet ${identity.parmSetId ?? '-'}`);
+      if (kindArg === 'measure') {
+        try { shown = await measurePlan(identity); }
+        catch (e) { return finish('failed', { reason: (e as Error).message, identity }); }
+        log(`Measurement: rootEntityId ${shown.docId}, tip ${shown.tipFeatureId} (#${shown.tipHandle}), feature ${shown.featureId} (#${shown.featureHandle}), face ${shown.faceId}`);
+        log(`Operation that would be sent: ${JSON.stringify(shown.op)}`);
+      }
       log('If this is the intended disposable document, type "confirm"; otherwise "quit".');
       return;
     }
@@ -116,9 +113,12 @@ rl.on('line', async (line) => {
       if (!identity.parmSetId) finish('failed', { reason: 'no parameter set observed in the page traffic', identity });
       op = { kind: 'param', docId: identity.docId, workshopId: identity.workshopId, parmSetId: identity.parmSetId! };
     } else {
-      const f = featureFacts(before, featureArg!);
-      if (!f.tipFeatureId || !f.featureHandle) finish('failed', { reason: `no tip feature or no ivy::SolidExtrude with id ${featureArg}`, identity, facts: f });
-      op = { kind: 'measure_face', docId: identity.docId, workshopId: identity.workshopId, tipFeatureId: f.tipFeatureId!, featureId: featureArg!, faceId: faceArg! };
+      // Re-derived immediately before the request; anything but the operation shown at "ready" is refused.
+      let now: MeasurePlan;
+      try { now = await measurePlan(identity); }
+      catch (e) { return finish('failed', { reason: (e as Error).message, identity, shown: shown?.op }); }
+      if (!shown || JSON.stringify(now) !== JSON.stringify(shown)) return finish('failed', { reason: 'the measurement changed after it was shown', shown: shown?.op, now: now.op });
+      op = now.op;
     }
     mark('op start');
     const startIdx = records.length - 1;

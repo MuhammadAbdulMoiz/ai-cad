@@ -1,0 +1,1502 @@
+{
+ "kind": "message",
+ "dir": "received",
+ "cmd": "IVY_APP_MODEL_NTF",
+ "status": "decoded",
+ "frames": [
+  96
+ ],
+ "pkg": {
+  "appModelNtf": {
+   "workshopHead": {
+    "workshopId": "1",
+    "currentDocId": "527",
+    "workbenchType": 1,
+    "featureId": -2
+   },
+   "modelDescs": [
+    {
+     "docId": "527",
+     "workbenchType": 1,
+     "modelPkgDecoded": {
+      "header": {
+       "cmd": "IVY_PART_DATA_NTF",
+       "tipFeatureId": "46"
+      },
+      "dataNtf": {
+       "features": [
+        {
+         "solidSetFeature": {
+          "feat": {
+           "id": 9,
+           "name": "Part Body",
+           "children": [
+            18,
+            46
+           ],
+           "attributes": [
+            {
+             "role": "10009",
+             "attrFirst": [
+              {
+               "name": "Part Body",
+               "options": [
+                {
+                 "value": true
+                },
+                {
+                 "value": true,
+                 "index": 1
+                },
+                {
+                 "index": 2
+                },
+                {
+                 "index": 3
+                },
+                {
+                 "index": 4
+                },
+                {
+                 "value": true,
+                 "index": 5
+                },
+                {
+                 "index": 6
+                },
+                {
+                 "index": 7
+                },
+                {
+                 "value": true,
+                 "index": 8
+                },
+                {
+                 "index": 9
+                },
+                {
+                 "index": 10
+                },
+                {
+                 "index": 11
+                },
+                {
+                 "index": 12
+                },
+                {
+                 "index": 13
+                },
+                {
+                 "index": 14
+                },
+                {
+                 "index": 15
+                }
+               ]
+              }
+             ]
+            }
+           ],
+           "type": "ivy::FeatSolidSet"
+          },
+          "color": 16183751,
+          "exportFeatures": [
+           46
+          ]
+         },
+         "feature": "solidSetFeature",
+         "featureId": 9,
+         "parentFeatureId": 1,
+         "previousFeatureId": 2
+        },
+        {
+         "featUpdateFeature": {
+          "feat": {
+           "id": 46,
+           "name": "Extrude1",
+           "attributes": [
+            {
+             "role": "20003",
+             "parm": [
+              {
+               "featId": "47",
+               "fullName": "\\Part Body\\Extrude1\\Deactivated",
+               "value": "0",
+               "formula": "0",
+               "type": "tBool"
+              }
+             ]
+            },
+            {
+             "role": "10009",
+             "attrFirst": [
+              {
+               "name": "Extrude1",
+               "options": [
+                {
+                 "value": true
+                },
+                {
+                 "value": true,
+                 "index": 1
+                },
+                {
+                 "index": 2
+                },
+                {
+                 "index": 3
+                },
+                {
+                 "index": 4
+                },
+                {
+                 "value": true,
+                 "index": 5
+                },
+                {
+                 "index": 6
+                },
+                {
+                 "index": 7
+                },
+                {
+                 "index": 8
+                },
+                {
+                 "index": 9
+                },
+                {
+                 "index": 10
+                },
+                {
+                 "index": 11
+                },
+                {
+                 "index": 12
+                },
+                {
+                 "index": 13
+                },
+                {
+                 "index": 14
+                },
+                {
+                 "index": 15
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "20011"
+            },
+            {
+             "role": "20012",
+             "bitset": [
+              {},
+              {
+               "index": 1
+              },
+              {
+               "index": 2
+              },
+              {
+               "index": 3
+              },
+              {
+               "index": 4
+              },
+              {
+               "index": 5
+              },
+              {
+               "index": 6
+              },
+              {
+               "index": 7
+              },
+              {
+               "index": 8
+              },
+              {
+               "index": 9
+              },
+              {
+               "index": 10
+              },
+              {
+               "index": 11
+              },
+              {
+               "index": 12
+              },
+              {
+               "index": 13
+              },
+              {
+               "index": 14
+              },
+              {
+               "index": 15
+              }
+             ]
+            },
+            {
+             "role": "30002",
+             "enum": [
+              0,
+              0
+             ]
+            },
+            {
+             "role": "30003",
+             "select": [
+              {
+               "featureId": 18,
+               "item": [
+                {
+                 "topoType": "TopoFace"
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "30004"
+            },
+            {
+             "role": "30005"
+            },
+            {
+             "role": "30006",
+             "bitset": [
+              {},
+              {
+               "index": 1
+              },
+              {
+               "value": true,
+               "index": 2
+              },
+              {
+               "index": 3
+              },
+              {
+               "index": 4
+              },
+              {
+               "index": 5
+              },
+              {
+               "index": 6
+              },
+              {
+               "index": 7
+              },
+              {
+               "index": 8
+              },
+              {
+               "index": 9
+              },
+              {
+               "index": 10
+              },
+              {
+               "index": 11
+              },
+              {
+               "index": 12
+              },
+              {
+               "index": 13
+              },
+              {
+               "index": 14
+              },
+              {
+               "index": 15
+              }
+             ]
+            },
+            {
+             "role": "31027",
+             "parm": [
+              {
+               "featId": "48",
+               "fullName": "\\Part Body\\Extrude1\\ThickenLength_0",
+               "value": "1.000000",
+               "formula": "1",
+               "type": "tLength",
+               "unit": "m"
+              },
+              {
+               "featId": "49",
+               "fullName": "\\Part Body\\Extrude1\\ThickenLength_1",
+               "value": "1.000000",
+               "formula": "1",
+               "type": "tLength",
+               "unit": "m"
+              }
+             ]
+            },
+            {
+             "role": "31029",
+             "check": [
+              false
+             ]
+            },
+            {
+             "role": "31001",
+             "enum": [
+              0
+             ]
+            },
+            {
+             "role": "31002",
+             "enum": [
+              0
+             ]
+            },
+            {
+             "role": "31003",
+             "enum": [
+              0
+             ]
+            },
+            {
+             "role": "31004",
+             "parm": [
+              {
+               "featId": "39",
+               "fullName": "\\Part Body\\Extrude1\\ivy::ParmLength.EN_US13",
+               "value": "8.000000",
+               "formula": "8",
+               "type": "tLength",
+               "unit": "m"
+              }
+             ]
+            },
+            {
+             "role": "31005",
+             "check": [
+              false
+             ]
+            },
+            {
+             "role": "31006"
+            },
+            {
+             "role": "31007"
+            },
+            {
+             "role": "31008",
+             "check": [
+              false
+             ]
+            },
+            {
+             "role": "31009"
+            },
+            {
+             "role": "31010",
+             "parm": [
+              {
+               "featId": "40",
+               "fullName": "\\Part Body\\Extrude1\\ivy::ParmLength.EN_US14",
+               "value": "10.000000",
+               "formula": "10",
+               "type": "tLength",
+               "unit": "m"
+              }
+             ]
+            },
+            {
+             "role": "31011",
+             "check": [
+              false
+             ]
+            },
+            {
+             "role": "31012",
+             "check": [
+              false
+             ]
+            },
+            {
+             "role": "31013",
+             "parm": [
+              {
+               "featId": "42",
+               "fullName": "\\Part Body\\Extrude1\\ivy::ParmLength.EN_US15",
+               "value": "10.000000",
+               "formula": "10",
+               "type": "tLength",
+               "unit": "m"
+              }
+             ]
+            },
+            {
+             "role": "31014"
+            },
+            {
+             "role": "31015",
+             "check": [
+              false
+             ]
+            },
+            {
+             "role": "31016",
+             "check": [
+              false
+             ]
+            },
+            {
+             "role": "31017",
+             "check": [
+              false
+             ]
+            },
+            {
+             "role": "31018",
+             "parm": [
+              {
+               "featId": "41",
+               "fullName": "\\Part Body\\Extrude1\\ivy::ParmAngle.EN_US5",
+               "value": "1.000000",
+               "formula": "1",
+               "type": "tAngle"
+              }
+             ]
+            },
+            {
+             "role": "31019",
+             "check": [
+              false
+             ]
+            },
+            {
+             "role": "31020",
+             "check": [
+              false
+             ]
+            },
+            {
+             "role": "31021",
+             "parm": [
+              {
+               "featId": "43",
+               "fullName": "\\Part Body\\Extrude1\\ivy::ParmAngle.EN_US6",
+               "value": "1.000000",
+               "formula": "1",
+               "type": "tAngle"
+              }
+             ]
+            },
+            {
+             "role": "31022",
+             "check": [
+              false
+             ]
+            },
+            {
+             "role": "31023",
+             "check": [
+              false
+             ]
+            },
+            {
+             "role": "31024",
+             "check": [
+              false
+             ]
+            },
+            {
+             "role": "31025",
+             "check": [
+              false
+             ]
+            }
+           ],
+           "type": "SolidExtrude"
+          },
+          "topoBodyId": 440,
+          "topoGroupId": 3
+         },
+         "feature": "featUpdateFeature",
+         "featureId": 46,
+         "parentFeatureId": 9,
+         "previousFeatureId": 18
+        },
+        {
+         "sketchFeature": {
+          "sketchFeat": {
+           "feat": {
+            "id": 18,
+            "name": "Sketch1",
+            "attributes": [
+             {
+              "role": "20003",
+              "parm": [
+               {
+                "featId": "19",
+                "fullName": "\\Part Body\\Sketch1\\Deactivated",
+                "value": "0",
+                "type": "tBool"
+               }
+              ]
+             },
+             {
+              "role": "10009",
+              "attrFirst": [
+               {
+                "name": "Sketch1",
+                "options": [
+                 {
+                  "value": true
+                 },
+                 {
+                  "value": true,
+                  "index": 1
+                 },
+                 {
+                  "index": 2
+                 },
+                 {
+                  "index": 3
+                 },
+                 {
+                  "index": 4
+                 },
+                 {
+                  "index": 5
+                 },
+                 {
+                  "index": 6
+                 },
+                 {
+                  "index": 7
+                 },
+                 {
+                  "index": 8
+                 },
+                 {
+                  "index": 9
+                 },
+                 {
+                  "index": 10
+                 },
+                 {
+                  "index": 11
+                 },
+                 {
+                  "index": 12
+                 },
+                 {
+                  "index": 13
+                 },
+                 {
+                  "index": 14
+                 },
+                 {
+                  "index": 15
+                 }
+                ]
+               }
+              ]
+             },
+             {
+              "role": "40007",
+              "enum": [
+               2
+              ]
+             }
+            ],
+            "type": "ivy::FeatSketch"
+           },
+           "meshId": 18
+          },
+          "support": {
+           "supportBrep": {
+            "featureId": 3
+           },
+           "supportTransform": {
+            "basis": [
+             {
+              "x": 1
+             },
+             {
+              "y": 1
+             },
+             {
+              "z": 1
+             }
+            ],
+            "origin": {}
+           }
+          },
+          "geoms": [
+           {
+            "tag": "4",
+            "line": {
+             "start": {
+              "x": -50,
+              "y": 30
+             },
+             "end": {
+              "x": 50,
+              "y": 30
+             },
+             "lastNonZeroDir": {
+              "x": 100
+             }
+            },
+            "data": "line"
+           },
+           {
+            "tag": "5",
+            "line": {
+             "start": {
+              "x": 50,
+              "y": 30
+             },
+             "end": {
+              "x": 50,
+              "y": -30
+             },
+             "lastNonZeroDir": {
+              "y": -60
+             }
+            },
+            "data": "line"
+           },
+           {
+            "tag": "6",
+            "line": {
+             "start": {
+              "x": 50,
+              "y": -30
+             },
+             "end": {
+              "x": -50,
+              "y": -30
+             },
+             "lastNonZeroDir": {
+              "x": -100
+             }
+            },
+            "data": "line"
+           },
+           {
+            "tag": "7",
+            "line": {
+             "start": {
+              "x": -50,
+              "y": -30
+             },
+             "end": {
+              "x": -50,
+              "y": 30
+             },
+             "lastNonZeroDir": {
+              "y": 60
+             }
+            },
+            "data": "line"
+           }
+          ],
+          "constraints": [
+           {
+            "constraint": {
+             "type": "CONSTRAINT_TYPE_COINCIDENT",
+             "first": "4",
+             "firstPos": "POINT_POS_TYPE_END",
+             "second": "5",
+             "secondPos": "POINT_POS_TYPE_START",
+             "third": "-2000",
+             "labelDistance": 10,
+             "isDriving": true,
+             "internalAlignmentIndex": -1,
+             "isActive": true,
+             "labelTransform": {
+              "basis": [
+               {
+                "x": 1
+               },
+               {
+                "y": 1
+               },
+               {
+                "z": 1
+               }
+              ],
+              "origin": {}
+             },
+             "tag": "1"
+            },
+            "data": "constraint"
+           },
+           {
+            "constraint": {
+             "type": "CONSTRAINT_TYPE_COINCIDENT",
+             "first": "5",
+             "firstPos": "POINT_POS_TYPE_END",
+             "second": "6",
+             "secondPos": "POINT_POS_TYPE_START",
+             "third": "-2000",
+             "labelDistance": 10,
+             "isDriving": true,
+             "internalAlignmentIndex": -1,
+             "isActive": true,
+             "labelTransform": {
+              "basis": [
+               {
+                "x": 1
+               },
+               {
+                "y": 1
+               },
+               {
+                "z": 1
+               }
+              ],
+              "origin": {}
+             },
+             "tag": "2"
+            },
+            "data": "constraint"
+           },
+           {
+            "constraint": {
+             "type": "CONSTRAINT_TYPE_COINCIDENT",
+             "first": "6",
+             "firstPos": "POINT_POS_TYPE_END",
+             "second": "7",
+             "secondPos": "POINT_POS_TYPE_START",
+             "third": "-2000",
+             "labelDistance": 10,
+             "isDriving": true,
+             "internalAlignmentIndex": -1,
+             "isActive": true,
+             "labelTransform": {
+              "basis": [
+               {
+                "x": 1
+               },
+               {
+                "y": 1
+               },
+               {
+                "z": 1
+               }
+              ],
+              "origin": {}
+             },
+             "tag": "3"
+            },
+            "data": "constraint"
+           },
+           {
+            "constraint": {
+             "type": "CONSTRAINT_TYPE_COINCIDENT",
+             "first": "7",
+             "firstPos": "POINT_POS_TYPE_END",
+             "second": "4",
+             "secondPos": "POINT_POS_TYPE_START",
+             "third": "-2000",
+             "labelDistance": 10,
+             "isDriving": true,
+             "internalAlignmentIndex": -1,
+             "isActive": true,
+             "labelTransform": {
+              "basis": [
+               {
+                "x": 1
+               },
+               {
+                "y": 1
+               },
+               {
+                "z": 1
+               }
+              ],
+              "origin": {}
+             },
+             "tag": "4"
+            },
+            "data": "constraint"
+           },
+           {
+            "constraint": {
+             "type": "CONSTRAINT_TYPE_HORIZONTAL",
+             "first": "4",
+             "second": "-2000",
+             "third": "-2000",
+             "labelDistance": 10,
+             "isDriving": true,
+             "internalAlignmentIndex": -1,
+             "isActive": true,
+             "labelTransform": {
+              "basis": [
+               {
+                "x": 1
+               },
+               {
+                "y": 1
+               },
+               {
+                "z": 1
+               }
+              ],
+              "origin": {}
+             },
+             "tag": "5"
+            },
+            "data": "constraint"
+           },
+           {
+            "constraint": {
+             "type": "CONSTRAINT_TYPE_VERTICAL",
+             "first": "5",
+             "second": "-2000",
+             "third": "-2000",
+             "labelDistance": 10,
+             "isDriving": true,
+             "internalAlignmentIndex": -1,
+             "isActive": true,
+             "labelTransform": {
+              "basis": [
+               {
+                "x": 1
+               },
+               {
+                "y": 1
+               },
+               {
+                "z": 1
+               }
+              ],
+              "origin": {}
+             },
+             "tag": "6"
+            },
+            "data": "constraint"
+           },
+           {
+            "constraint": {
+             "type": "CONSTRAINT_TYPE_HORIZONTAL",
+             "first": "6",
+             "second": "-2000",
+             "third": "-2000",
+             "labelDistance": 10,
+             "isDriving": true,
+             "internalAlignmentIndex": -1,
+             "isActive": true,
+             "labelTransform": {
+              "basis": [
+               {
+                "x": 1
+               },
+               {
+                "y": 1
+               },
+               {
+                "z": 1
+               }
+              ],
+              "origin": {}
+             },
+             "tag": "7"
+            },
+            "data": "constraint"
+           },
+           {
+            "constraint": {
+             "type": "CONSTRAINT_TYPE_VERTICAL",
+             "first": "7",
+             "second": "-2000",
+             "third": "-2000",
+             "labelDistance": 10,
+             "isDriving": true,
+             "internalAlignmentIndex": -1,
+             "isActive": true,
+             "labelTransform": {
+              "basis": [
+               {
+                "x": 1
+               },
+               {
+                "y": 1
+               },
+               {
+                "z": 1
+               }
+              ],
+              "origin": {}
+             },
+             "tag": "8"
+            },
+            "data": "constraint"
+           },
+           {
+            "constraint": {
+             "value": 100,
+             "type": "CONSTRAINT_TYPE_DISTANCE_X",
+             "first": "6",
+             "firstPos": "POINT_POS_TYPE_END",
+             "second": "6",
+             "secondPos": "POINT_POS_TYPE_START",
+             "third": "-2000",
+             "labelDistance": 10,
+             "isDriving": true,
+             "internalAlignmentIndex": -1,
+             "isActive": true,
+             "labelTransform": {
+              "basis": [
+               {
+                "x": 1
+               },
+               {
+                "y": 1
+               },
+               {
+                "z": 1
+               }
+              ],
+              "origin": {
+               "x": 5.627883007701913,
+               "y": -16.186903815758622
+              }
+             },
+             "tag": "9"
+            },
+            "data": "constraint"
+           },
+           {
+            "constraint": {
+             "value": 60,
+             "type": "CONSTRAINT_TYPE_DISTANCE_Y",
+             "first": "5",
+             "firstPos": "POINT_POS_TYPE_END",
+             "second": "5",
+             "secondPos": "POINT_POS_TYPE_START",
+             "third": "-2000",
+             "labelDistance": 10,
+             "isDriving": true,
+             "internalAlignmentIndex": -1,
+             "isActive": true,
+             "labelTransform": {
+              "basis": [
+               {
+                "x": 1
+               },
+               {
+                "y": 1
+               },
+               {
+                "z": 1
+               }
+              ],
+              "origin": {
+               "x": 14.545418455598345,
+               "y": -13.893836175264083
+              }
+             },
+             "tag": "10"
+            },
+            "data": "constraint"
+           }
+          ],
+          "sketchVertices": [
+           {
+            "tag": "31",
+            "keys": [
+             "18",
+             "21"
+            ]
+           },
+           {
+            "tag": "32",
+            "keys": [
+             "22",
+             "25"
+            ]
+           },
+           {
+            "tag": "33",
+            "keys": [
+             "26",
+             "29"
+            ]
+           },
+           {
+            "tag": "34",
+            "keys": [
+             "30",
+             "17"
+            ]
+           },
+           {
+            "tag": "35",
+            "keys": [
+             "5"
+            ]
+           }
+          ],
+          "dimensionData": [
+           {
+            "featId": "21",
+            "tagId": "9"
+           },
+           {
+            "featId": "23",
+            "tagId": "10"
+           }
+          ],
+          "solverEnum": "DCM",
+          "sketchSolveData": {
+           "diagnosticsValid": true,
+           "totalDof": 2
+          },
+          "_sketchSolveData": "sketchSolveData",
+          "version": "8"
+         },
+         "feature": "sketchFeature",
+         "featureId": 18,
+         "parentFeatureId": 9,
+         "previousFeatureId": -1
+        },
+        {
+         "featUpdateFeature": {
+          "feat": {
+           "id": 1,
+           "name": "Part",
+           "children": [
+            2,
+            9,
+            10
+           ],
+           "attributes": [
+            {
+             "role": "10009",
+             "attrFirst": [
+              {
+               "name": "Part",
+               "options": [
+                {
+                 "value": true
+                },
+                {
+                 "value": true,
+                 "index": 1
+                },
+                {
+                 "index": 2
+                },
+                {
+                 "index": 3
+                },
+                {
+                 "index": 4
+                },
+                {
+                 "value": true,
+                 "index": 5
+                },
+                {
+                 "index": 6
+                },
+                {
+                 "index": 7
+                },
+                {
+                 "index": 8
+                },
+                {
+                 "index": 9
+                },
+                {
+                 "index": 10
+                },
+                {
+                 "index": 11
+                },
+                {
+                 "index": 12
+                },
+                {
+                 "index": 13
+                },
+                {
+                 "index": 14
+                },
+                {
+                 "index": 15
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "10010",
+             "select": [
+              {
+               "featureId": 46
+              }
+             ]
+            }
+           ],
+           "type": "ivy::FeatPart"
+          }
+         },
+         "feature": "featUpdateFeature",
+         "featureId": 1,
+         "parentFeatureId": -1,
+         "previousFeatureId": -1
+        }
+       ],
+       "tessellations": [
+        {
+         "id": 46,
+         "faceGroups": [
+          {
+           "indices": [
+            3,
+            0,
+            2,
+            1,
+            -1
+           ],
+           "topoTag": 542,
+           "featId": 46
+          },
+          {
+           "indices": [
+            5,
+            3,
+            4,
+            2,
+            -1
+           ],
+           "topoTag": 540,
+           "featId": 46
+          },
+          {
+           "indices": [
+            7,
+            5,
+            6,
+            4,
+            -1
+           ],
+           "topoTag": 538,
+           "featId": 46
+          },
+          {
+           "indices": [
+            0,
+            7,
+            1,
+            6,
+            -1
+           ],
+           "topoTag": 536,
+           "featId": 46
+          },
+          {
+           "indices": [
+            5,
+            7,
+            3,
+            0,
+            -1
+           ],
+           "topoTag": 477,
+           "featId": 46
+          },
+          {
+           "indices": [
+            6,
+            4,
+            1,
+            2,
+            -1
+           ],
+           "topoTag": 520,
+           "featId": 46
+          }
+         ],
+         "position": [
+          {
+           "x": 0.05000000074505806,
+           "y": 0.029999999329447746,
+           "z": 0.00800000037997961
+          },
+          {
+           "x": 0.05000000074505806,
+           "y": 0.029999999329447746
+          },
+          {
+           "x": -0.05000000074505806,
+           "y": 0.029999999329447746
+          },
+          {
+           "x": -0.05000000074505806,
+           "y": 0.029999999329447746,
+           "z": 0.00800000037997961
+          },
+          {
+           "x": -0.05000000074505806,
+           "y": -0.029999999329447746
+          },
+          {
+           "x": -0.05000000074505806,
+           "y": -0.029999999329447746,
+           "z": 0.00800000037997961
+          },
+          {
+           "x": 0.05000000074505806,
+           "y": -0.029999999329447746
+          },
+          {
+           "x": 0.05000000074505806,
+           "y": -0.029999999329447746,
+           "z": 0.00800000037997961
+          }
+         ],
+         "edgeGroups": [
+          {
+           "indices": [
+            3,
+            2
+           ],
+           "topoTag": 533
+          },
+          {
+           "indices": [
+            5,
+            4
+           ],
+           "topoTag": 524
+          },
+          {
+           "indices": [
+            7,
+            6
+           ],
+           "topoTag": 527
+          },
+          {
+           "indices": [
+            1,
+            0
+           ],
+           "topoTag": 530
+          },
+          {
+           "indices": [
+            7,
+            0
+           ],
+           "topoTag": 447
+          },
+          {
+           "indices": [
+            5,
+            7
+           ],
+           "topoTag": 471
+          },
+          {
+           "indices": [
+            3,
+            5
+           ],
+           "topoTag": 461
+          },
+          {
+           "indices": [
+            0,
+            3
+           ],
+           "topoTag": 466
+          },
+          {
+           "indices": [
+            1,
+            6
+           ],
+           "topoTag": 490
+          },
+          {
+           "indices": [
+            6,
+            4
+           ],
+           "topoTag": 511
+          },
+          {
+           "indices": [
+            4,
+            2
+           ],
+           "topoTag": 509
+          },
+          {
+           "indices": [
+            2,
+            1
+           ],
+           "topoTag": 507
+          }
+         ],
+         "points": [
+          5,
+          7,
+          0,
+          3,
+          4,
+          6,
+          1,
+          2
+         ],
+         "encodedNormals": "gB/8ABAAgAAA//AAgBAAgBAC",
+         "normalGroups": [
+          {
+           "indices": [
+            0,
+            0,
+            0,
+            0,
+            -1
+           ]
+          },
+          {
+           "indices": [
+            1,
+            1,
+            1,
+            1,
+            -1
+           ]
+          },
+          {
+           "indices": [
+            2,
+            2,
+            2,
+            2,
+            -1
+           ]
+          },
+          {
+           "indices": [
+            3,
+            3,
+            3,
+            3,
+            -1
+           ]
+          },
+          {
+           "indices": [
+            4,
+            4,
+            4,
+            4,
+            -1
+           ]
+          },
+          {
+           "indices": [
+            5,
+            5,
+            5,
+            5,
+            -1
+           ]
+          }
+         ]
+        },
+        {
+         "id": 18,
+         "faceGroups": [
+          {
+           "indices": [
+            3,
+            2,
+            1,
+            -1,
+            1,
+            0,
+            3,
+            -1
+           ]
+          }
+         ],
+         "position": [
+          {
+           "x": -0.05000000074505806,
+           "y": 0.029999999329447746
+          },
+          {
+           "x": 0.05000000074505806,
+           "y": 0.029999999329447746
+          },
+          {
+           "x": 0.05000000074505806,
+           "y": -0.029999999329447746
+          },
+          {
+           "x": -0.05000000074505806,
+           "y": -0.029999999329447746
+          }
+         ],
+         "edgeGroups": [
+          {
+           "indices": [
+            0,
+            1
+           ]
+          },
+          {
+           "indices": [
+            1,
+            2
+           ]
+          },
+          {
+           "indices": [
+            2,
+            3
+           ]
+          },
+          {
+           "indices": [
+            3,
+            0
+           ]
+          }
+         ],
+         "points": [
+          0,
+          1,
+          2,
+          3
+         ]
+        }
+       ],
+       "visudata": [
+        {
+         "materialName": "default",
+         "materialColor": "default"
+        }
+       ]
+      },
+      "body": "dataNtf"
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,66 @@
+digraph G {
+0 [label="ivy::Project", shape=box, style="rounded, filled", fillcolor="#337ECC" fontcolor=white, fontsize=24, width=2, height=1];
+  "163208757777" [label="ivy::PipelineContext 163208757777", style=filled, fillcolor="#FFA07A"];
+0 [label="ivy::Project", shape=box, style="rounded, filled", fillcolor="#337ECC" fontcolor=white, fontsize=24, width=2, height=1];
+subgraph cluster_530{ 
+label="Part"
+style=filled; fillcolor= "#E8F5E9"; color="#A5D6A7"; 
+  "530" [label="ivy::PartReference 530", style=filled, fillcolor="#FFFFE0"];
+  "534" [label="ivy::PartRepresentation 534", style=filled, fillcolor="#FFA07A"];
+  "531" [label="ivy::ShapeContainer 531
+()", style=filled, fillcolor="#FFA07A"];
+  "532" [label="ivy::FeatContainer 532
+()", style=filled, fillcolor="#FFA07A"];
+  "540" [label="ivy::FeatPart 540
+1 Part", style=filled, fillcolor="#FFA07A"];
+  "542" [label="ivy::FeatOriginSet 542
+2 Default Geometry", style=filled, fillcolor="#FFA07A"];
+  "538" [label="ivy::FeatOriginPlane 538
+3 XY Plane", style=filled, fillcolor="#FFA07A"];
+  "539" [label="ivy::ParmBool 539
+4 Deactivated", style=filled, fillcolor="#FFA07A"];
+  "537" [label="ivy::FeatOriginPlane 537
+5 YZ Plane", style=filled, fillcolor="#FFA07A"];
+  "541" [label="ivy::ParmBool 541
+6 Deactivated", style=filled, fillcolor="#FFA07A"];
+  "544" [label="ivy::FeatOriginPlane 544
+7 ZX Plane", style=filled, fillcolor="#FFA07A"];
+  "543" [label="ivy::ParmBool 543
+8 Deactivated", style=filled, fillcolor="#FFA07A"];
+  "545" [label="ivy::FeatSolidSet 545
+9 Part Body", style=filled, fillcolor="#FFA07A"];
+  "546" [label="ivy::ParmSet 546
+10 Parameter Set", style=filled, fillcolor="#FFA07A"];
+  "535" [label="ivy::TopoContainer 535
+()", style=filled, fillcolor="#FFA07A"];
+  "536" [label="BRepContainer 536
+()", style=filled, fillcolor="#FFA07A"];
+  "533" [label="ivy::VisuContainer 533
+()", style=filled, fillcolor="#FFA07A"];
+}
+0 [label="ivy::Project", shape=box, style="rounded, filled", fillcolor="#337ECC" fontcolor=white, fontsize=24, width=2, height=1];
+  "547" [label="ivy::PartDesignWorkshop 547", style=filled, fillcolor="#FFFFE0"];
+  "0" -> "163208757777" [label="Contain", color="#87CEEB"];
+  "530" -> "534" [label="Contain", color="#87CEEB"];
+  "534" -> "531" [label="Contain", color="#87CEEB"];
+  "531" -> "532" [label="Contain", color="#87CEEB"];
+  "532" -> "540" [label="Contain", color="#87CEEB"];
+  "540" -> "542" [label="Contain", color="#87CEEB"];
+  "542" -> "538" [label="Contain", color="#87CEEB"];
+  "538" -> "539" [label="Contain", color="#87CEEB"];
+  "538" -> "539" [label="DependsOn", color="#FFA07A"];
+  "542" -> "537" [label="Contain", color="#87CEEB"];
+  "537" -> "541" [label="Contain", color="#87CEEB"];
+  "537" -> "541" [label="DependsOn", color="#FFA07A"];
+  "542" -> "544" [label="Contain", color="#87CEEB"];
+  "544" -> "543" [label="Contain", color="#87CEEB"];
+  "544" -> "543" [label="DependsOn", color="#FFA07A"];
+  "540" -> "545" [label="Contain", color="#87CEEB"];
+  "540" -> "546" [label="Contain", color="#87CEEB"];
+  "531" -> "535" [label="Contain", color="#87CEEB"];
+  "531" -> "536" [label="Contain", color="#87CEEB"];
+  "534" -> "533" [label="Contain", color="#87CEEB"];
+  "0" -> "530" [label="Contain", color="#87CEEB"];
+  "547" -> "530" [label="DependsOn", color="#FFA07A"];
+  "0" -> "547" [label="Contain", color="#87CEEB"];
+}

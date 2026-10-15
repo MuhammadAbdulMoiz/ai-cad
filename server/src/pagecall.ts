@@ -23,7 +23,7 @@ export const PAGE_FN = `async (a) => {
 }`;
 
 const ProjectZ = z.object({ projectId: z.string(), projectTag: z.string(), valid: z.boolean().nullable() });
-const PageResultZ = z.object({
+export const PageResultZ = z.object({
   ok: z.boolean(), error: z.string().optional(), project: ProjectZ.optional(),
   asyncId: z.string().nullable().optional(), unknownOutcome: z.boolean().optional(),
 }).strict();

@@ -20,6 +20,30 @@ export function redactUrl(raw: string): string {
   return u.toString();
 }
 
+/**
+ * The record stream the live write guard's traffic port reads (`position`/`since`). Contract: ONE stream per recorder
+ * attachment, written by that attachment only, indices 0, 1, 2, … with no hole. attachRecorder numbers from 0 each
+ * time, so reattaching onto a used stream (or a record lost to a throwing handler, which still consumed its index)
+ * shows as an index that is not the next one. The stream then breaks for good: every later read throws, so a guard
+ * refuses or reports unknown. A reattached recorder needs a new stream and a new guard; nothing is resumed or renumbered.
+ */
+export class RecordStream {
+  readonly #recs: CaptureRecord[] = [];
+  #broken?: string;
+  readonly write = (r: CaptureRecord): void => {
+    if (this.#broken) return;
+    if (r?.i !== this.#recs.length) { this.#broken = `record index ${r?.i} written where ${this.#recs.length} was expected (recorder reattached, or a record lost)`; return; }
+    this.#recs.push(Object.freeze({ ...r }) as CaptureRecord);
+  };
+  #check() { if (this.#broken) throw new Error(`traffic stream broken: ${this.#broken}`); }
+  position(): number { this.#check(); return this.#recs.length; }
+  since(p: number): CaptureRecord[] {
+    this.#check();
+    if (!Number.isSafeInteger(p) || p < 0 || p > this.#recs.length) throw new Error(`traffic position ${p} is not in the stream (0–${this.#recs.length})`);
+    return this.#recs.slice(p);
+  }
+}
+
 /** Subscribes to WebSocket events, then enables the Network domain. Returns a function that adds a mark. */
 export async function attachRecorder(cdp: ReadOnlyCdp, write: (r: CaptureRecord) => void): Promise<(text: string) => void> {
   let i = 0;

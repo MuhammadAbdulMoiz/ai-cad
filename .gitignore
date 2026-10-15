@@ -3,3 +3,4 @@ node_modules/
 runs/
 .env
 .superpowers/
+.claude/settings.local.json

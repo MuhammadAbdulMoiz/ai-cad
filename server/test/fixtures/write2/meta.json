@@ -1,0 +1,4 @@
+{
+  "source": "runs/plate-trial-write2 (second live write, 2026-10-14): document 527 after step 2 (sketchDraw) and the guard final check, whose drift list is the exact difference from the verified state after sketchCreate",
+  "projectId": 37660626, "docId": 527, "sketch": { "id": 15, "handle": "549" }
+}
